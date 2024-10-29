@@ -1,6 +1,6 @@
 import { del, get, set } from 'idb-keyval'
 import { http, createConfig } from 'wagmi'
-import { mainnet, optimism, sepolia, optimismSepolia, arbitrumSepolia, baseSepolia, berachainTestnetbArtio, zoraSepolia, blastSepolia } from 'wagmi/chains'
+import { mainnet, optimism, sepolia, optimismSepolia, arbitrumSepolia, baseSepolia, berachainTestnetbArtio, zoraSepolia, blastSepolia, scrollSepolia, zkSyncSepoliaTestnet, lineaSepolia } from 'wagmi/chains'
 import { walletConnect } from 'wagmi/connectors'
 import { connectorsForWallets } from '@rainbow-me/rainbowkit';
 import {
@@ -30,13 +30,13 @@ const connectors = connectorsForWallets(
     },
   ],
   {
-    appName: 'My RainbowKit App',
+    appName: 'Smoke App',
     projectId: import.meta.env.VITE_WC_PROJECT_ID,
   }
 );
 
 export const config = createConfig({
-  chains: [mainnet, sepolia, optimism, optimismSepolia, arbitrumSepolia, baseSepolia, berachainTestnetbArtio, zoraSepolia, blastSepolia],
+  chains: [mainnet, sepolia, optimism, optimismSepolia, arbitrumSepolia, baseSepolia, berachainTestnetbArtio, zoraSepolia, blastSepolia, scrollSepolia, zkSyncSepoliaTestnet, lineaSepolia],
   // connectors: [
   //   walletConnect({
   //     projectId: import.meta.env.VITE_WC_PROJECT_ID,
@@ -55,6 +55,9 @@ export const config = createConfig({
     [berachainTestnetbArtio.id]: http(),
     [zoraSepolia.id]: http(),
     [blastSepolia.id]: http(),
+    [scrollSepolia.id]: http(),
+    [zkSyncSepoliaTestnet.id]: http(),
+    [lineaSepolia.id]: http(),
   },
 })
 

@@ -55,7 +55,7 @@ const AddWalletComp: React.FC<AddWalletProps> = ({
   setUpdateDataCounter,
 }) => {
   const { address } = useAccount();
-  const [limit, setLimit] = useState("0.01");
+  const [limit, setLimit] = useState("0.02");
   const [autogas, setAutogas] = useState(true);
   const [autogasConfig, setAutogasConfig] = useState<Record<string, boolean>>(
     {}

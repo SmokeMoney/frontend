@@ -517,13 +517,13 @@ const CrossChainLendingApp: React.FC = () => {
                     >
                       Repay
                     </Button>
-                    <Button
+                    {/* <Button
                       className="fontSizeLarge"
                       onClick={() => setActiveTab("nft")}
                       variant={activeTab === "nft" ? "destructive" : "default"}
                     >
                       NFT
-                    </Button>
+                    </Button> */}
                   </HStack>
                 </Flex>
               </Flex>

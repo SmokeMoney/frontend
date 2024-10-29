@@ -195,7 +195,7 @@ const MintNFTComp: React.FC<{
                 <div></div>
                 <HoverCard>
                   <HoverCardTrigger>
-                    Native Credit: 0.01 ETH (!)
+                    Native Credit: 0.02 ETH (!)
                   </HoverCardTrigger>
                   <HoverCardContent>
                     This is a built in native credit you get to spend on any

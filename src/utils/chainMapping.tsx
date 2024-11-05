@@ -112,6 +112,17 @@ export const chains: Chain[] = [
     wstethAddress: import.meta.env.VITE_ZKSYNC_WSTETH_ADDRESS!,
     explorer: "https://sepolia.explorer.zksync.io/",
   },
+  {
+    id: 40322,
+    legacyId: 2810,
+    name: "Morph Holesky",
+    rpcUrl: import.meta.env.VITE_MORPHSEPOLIA_RPC_URL!,
+    lendingAddress: import.meta.env.VITE_MORPH_LENDING_ADDRESS!,
+    depositAddress: import.meta.env.VITE_MORPH_DEPOSIT_ADDRESS!,
+    wethAddress: import.meta.env.VITE_MORPH_WETH_ADDRESS!,
+    wstethAddress: import.meta.env.VITE_MORPH_WSTETH_ADDRESS!,
+    explorer: "https://explorer-holesky.morphl2.io/",
+  },
   // {
   //   id: 40291,
   //   legacyId: 80084,

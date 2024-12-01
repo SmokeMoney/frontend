@@ -1,6 +1,7 @@
 import { useAccountEffect } from "wagmi";
 
 import CrossChainLendingApp from "./CrossChainLendingApp";
+import LifiComponent from "./components/LifiComponent";
 
 function App() {
   useAccountEffect({
@@ -15,6 +16,7 @@ function App() {
   return (
     <>
       <CrossChainLendingApp />
+      <LifiComponent />
     </>
   );
 }

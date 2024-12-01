@@ -13,7 +13,6 @@ import {
   midnightTheme,
   RainbowKitProvider,
 } from "@rainbow-me/rainbowkit";
-
 import { ThemeProvider } from "@/components/theme-provider";
 import "./index.css";
 

@@ -11,6 +11,9 @@
     "@chakra-ui/icons": "^2.1.1",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
+    "@lifi/sdk": "^3.4.1",
+    "@lifi/wallet-management": "^3.4.5",
+    "@lifi/widget": "^3.12.2",
     "@pythnetwork/price-service-client": "^1.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-checkbox": "^1.1.1",
@@ -25,7 +28,7 @@
     "@radix-ui/react-toast": "^1.2.1",
     "@rainbow-me/rainbowkit": "^2.1.3",
     "@tanstack/query-sync-storage-persister": "5.0.5",
-    "@tanstack/react-query": ">=5.45.1",
+    "@tanstack/react-query": "^5.62.0",
     "@tanstack/react-query-persist-client": "5.0.5",
     "@zoralabs/protocol-sdk": "^0.9.6",
     "axios": "^1.7.2",
@@ -38,8 +41,8 @@
     "react-dom": ">=18.3.1",
     "tailwind-merge": "^2.4.0",
     "tailwindcss-animate": "^1.0.7",
-    "viem": "2.*",
-    "wagmi": "workspace:*"
+    "viem": "^2.21.53",
+    "wagmi": "^2.13.2"
   },
   "devDependencies": {
     "@chakra-ui/react": "^2.8.2",

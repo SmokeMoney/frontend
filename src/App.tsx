@@ -1,9 +1,13 @@
 import { useAccountEffect } from "wagmi";
 
 import CrossChainLendingApp from "./CrossChainLendingApp";
+import { usePrivy } from "@privy-io/react-auth";
+
 import LifiComponent from "./components/LifiComponent";
 
 function App() {
+  const { authenticated } = usePrivy();
+
   useAccountEffect({
     onConnect(_data) {
       // console.log('onConnect', data)
@@ -16,7 +20,7 @@ function App() {
   return (
     <>
       <CrossChainLendingApp />
-      <LifiComponent />
+      {authenticated && <LifiComponent />}
     </>
   );
 }

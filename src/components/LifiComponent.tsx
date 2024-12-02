@@ -6,14 +6,14 @@ const LifiComponent: React.FC = () => {
     fromChain: 1, // Set source chain to Ethereum (chainId: 1)
     fromToken: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", // Set source token to ETH
     disabledUI: ["fromToken"],
-    // hiddenUI: [
-    //   "appearance",
-    //   "language",
-    //   "poweredBy",
-    //   "drawerCloseButton",
-    //   "walletMenu",
-    //   "integratorStepDetails",
-    // ],
+    hiddenUI: [
+      "appearance",
+      "language",
+      "poweredBy",
+      "drawerCloseButton",
+      "walletMenu",
+      "integratorStepDetails",
+    ],
   };
 
   return (

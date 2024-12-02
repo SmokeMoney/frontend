@@ -15,6 +15,7 @@ import {
 } from "@rainbow-me/rainbowkit";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./index.css";
+import { PrivyProvider } from "@privy-io/react-auth";
 
 // `@coinbase-wallet/sdk` uses `Buffer`
 globalThis.Buffer = Buffer;
@@ -43,18 +44,33 @@ const persister = createSyncStoragePersister({
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <WagmiProvider config={config}>
-      <PersistQueryClientProvider
-        client={queryClient}
-        persistOptions={{ persister }}
-      >
-        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-          <RainbowKitProvider showRecentTransactions={true}>
-            <App />
-          </RainbowKitProvider>
-        </ThemeProvider>
-        <ReactQueryDevtools initialIsOpen={false} />
-      </PersistQueryClientProvider>
-    </WagmiProvider>
+    <PrivyProvider
+      appId="cm43xbi1p02tovgpskmo86s36"
+      config={{
+        loginMethods: ["email", "wallet"],
+        appearance: {
+          theme: "dark",
+          accentColor: "#676FFF",
+          logo: "https://your-logo-url",
+        },
+        embeddedWallets: {
+          createOnLogin: "users-without-wallets",
+        },
+      }}
+    >
+      <WagmiProvider config={config}>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{ persister }}
+        >
+          <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+            <RainbowKitProvider showRecentTransactions={true}>
+              <App />
+            </RainbowKitProvider>
+          </ThemeProvider>
+          <ReactQueryDevtools initialIsOpen={false} />
+        </PersistQueryClientProvider>
+      </WagmiProvider>
+    </PrivyProvider>
   </React.StrictMode>
 );

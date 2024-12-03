@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { Transition } from "@headlessui/react";
+import { getToken } from "@lifi/sdk";
+
+
 import EthLogo from "../../public/eth.svg";
 import { TokenType } from "./TokenTable";
 
@@ -8,7 +11,8 @@ export interface IModalsProps {
   onClose: () => void;
   token?: TokenType;
   onSwapToken: (value: any) => void;
-  loading: boolean
+  loading: boolean;
+  chain: any
 }
 
 const BuyTokenModal = ({
@@ -17,16 +21,26 @@ const BuyTokenModal = ({
   token,
   onSwapToken,
   loading,
+  chain,
 }: IModalsProps) => {
+  console.log("🚀 ~ chain:", chain)
   const [ethAmount, setEthAmount] = useState<string>('');
+  const [ethInfo, setEthInfo] = useState<any>(null);
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
+      getEthPrice();
     } else {
       document.body.style.overflow = "auto";
     }
   }, [isOpen]);
+
+
+  async function getEthPrice() {
+    if(chain?.name && chain?.id) {
+    }
+  }
 
   function handleSubmit() {
     if (ethAmount && Number(ethAmount)) {
@@ -125,7 +139,7 @@ const BuyTokenModal = ({
                 </div>
               </div>
 
-              <div className="bg-[#252B36] p-3 rounded-xl border border-[#252B36] hover:border-black flex flex-col gap-4 mt-2">
+              <div className="bg-[#252B36] p-3 rounded-xl border border-[#252B36] flex flex-col gap-4 mt-2 hover:cursor-not-allowed">
                 <div className="flex flex-row justify-between items-center">
                   <div className="flex flex-row items-center gap-2 bg-[#2D3542] rounded-md p-1 px-3">
                     <div className="flex flex-row items-center gap-2">
@@ -139,11 +153,7 @@ const BuyTokenModal = ({
                     </div>
 
                   </div>
-                  <input
-                    disabled
-                    className="text-3xl text-right text-[#717A8C] outline-none bg-transparent w-1/2"
-                    placeholder="0.00"
-                  />
+                  <p className="text-3xl text-right text-[#717A8C] outline-none bg-transparent w-1/2">0.00</p>
                 </div>
 
                 <p className="text-right text-[#717A8C] text-xs">

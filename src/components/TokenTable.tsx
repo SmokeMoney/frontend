@@ -1,4 +1,3 @@
-// import { Table } from "antd";
 import { Table } from "@radix-ui/themes";
 
 export interface TokenType {
@@ -22,30 +21,30 @@ const TokenTable = ({ tokens, handleBuyToken }: TokenTableProps) => {
   return (
     <Table.Root>
       <Table.Header>
-        <Table.Row>
-          <Table.ColumnHeaderCell className="text-white text-left w-1/8">
-            Logo
+        <Table.Row className="">
+          <Table.ColumnHeaderCell className="text-white">
+            LOGO
           </Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell className="text-white text-left w-1/8">
-            coinKey
+          <Table.ColumnHeaderCell className="text-white">
+            COINKEY
           </Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell className="text-white text-left w-1/8">
-            address
+          <Table.ColumnHeaderCell className="text-white">
+            ADDRESS
           </Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell className="text-white text-left w-1/8">
-            chainId
+          <Table.ColumnHeaderCell className="text-white">
+            CHAINID
           </Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell className="text-white text-left w-1/8">
-            decimals
+          <Table.ColumnHeaderCell className="text-white">
+            DECIMALS
           </Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell className="text-white text-left w-1/8">
-            priceUSD
+          <Table.ColumnHeaderCell className="text-white">
+            PRICEUSD
           </Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell className="text-white text-left w-1/8">
-            symbol
+          <Table.ColumnHeaderCell className="text-white">
+            SYMBOL
           </Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell className="text-white text-left w-1/8">
-            Action
+          <Table.ColumnHeaderCell className="text-white">
+            ACTION
           </Table.ColumnHeaderCell>
         </Table.Row>
       </Table.Header>
@@ -70,7 +69,7 @@ const TokenTable = ({ tokens, handleBuyToken }: TokenTableProps) => {
               {token?.coinKey}
             </Table.Cell>
             <Table.Cell className="w-1/8 text-white">
-              {token?.address}
+              {token?.address.substring(0, 6)}....{token.address.slice(-4)}
             </Table.Cell>
             <Table.Cell className="w-1/8 text-white">
               {token?.chainId}
@@ -89,7 +88,7 @@ const TokenTable = ({ tokens, handleBuyToken }: TokenTableProps) => {
                 onClick={() => handleBuyToken(token)}
                 className="bg-yellow-400 hover:opacity-80 p-1 rounded-full px-5 w-full"
               >
-                <p className="text-[#717A8C]">Buy</p>
+                <p className="text-[#000]">Buy</p>
               </button>
             </Table.Cell>
           </Table.Row>

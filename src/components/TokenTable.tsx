@@ -36,7 +36,7 @@ const TokenTable = ({ tokens, handleBuyToken }: TokenTableProps) => {
 
       <Table.Body>
         {tokens.map?.((token: any, key: number) => (
-          <Table.Row key={key} className="hover:opacity-70 hover:cursor-pointer">
+          <Table.Row key={key} className="hover:opacity-70 hover:cursor-pointer h-10">
             <Table.Cell className="w-1/8" children={<img alt="logo" src={token?.logoURI} className="w-8 h-8 rounded-full border" />} />
             <Table.Cell className="w-1/8 text-white">{token?.coinKey}</Table.Cell>
             <Table.Cell className="w-1/8 text-white">{token?.address}</Table.Cell>
@@ -45,7 +45,7 @@ const TokenTable = ({ tokens, handleBuyToken }: TokenTableProps) => {
             <Table.Cell className="w-1/8 text-white">{token?.priceUSD}</Table.Cell>
             <Table.Cell className="w-1/8 text-white">{token?.symbol}</Table.Cell>
             <Table.Cell>
-              <button onClick={() => handleBuyToken(token)} className='bg-yellow-400 hover:opacity-80 p-1 rounded px-5 w-full'>
+              <button onClick={() => handleBuyToken(token)} className='bg-yellow-400 hover:opacity-80 p-1 rounded-full px-5 w-full'>
                 <p className='text-[#717A8C]'>Buy</p>
               </button>
             </Table.Cell>

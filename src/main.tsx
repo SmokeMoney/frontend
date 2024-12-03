@@ -22,6 +22,7 @@ globalThis.Buffer = Buffer;
 
 import App from "./App.tsx";
 import { config } from "./wagmi.ts";
+import { ApiProvider } from "./components/ApiContextProvider.tsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,7 +66,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
         >
           <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
             <RainbowKitProvider showRecentTransactions={true}>
-              <App />
+              <ApiProvider>
+                <App />
+              </ApiProvider>
             </RainbowKitProvider>
           </ThemeProvider>
           <ReactQueryDevtools initialIsOpen={false} />

@@ -1,17 +1,15 @@
 import { useState, useEffect } from "react";
 import { Transition } from "@headlessui/react";
-import { getToken } from "@lifi/sdk";
-
 
 import EthLogo from "../../public/eth.svg";
 import { TokenType } from "./TokenTable";
 
 export interface IModalsProps {
-  isOpen: boolean;
-  onClose: () => void;
   token?: TokenType;
   onSwapToken: (value: any) => void;
+  onClose: () => void;
   loading: boolean;
+  isOpen: boolean;
   chain: any
 }
 
@@ -23,24 +21,15 @@ const BuyTokenModal = ({
   loading,
   chain,
 }: IModalsProps) => {
-  console.log("🚀 ~ chain:", chain)
   const [ethAmount, setEthAmount] = useState<string>('');
-  const [ethInfo, setEthInfo] = useState<any>(null);
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
-      getEthPrice();
     } else {
       document.body.style.overflow = "auto";
     }
   }, [isOpen]);
-
-
-  async function getEthPrice() {
-    if(chain?.name && chain?.id) {
-    }
-  }
 
   function handleSubmit() {
     if (ethAmount && Number(ethAmount)) {

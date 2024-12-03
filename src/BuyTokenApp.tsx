@@ -1,16 +1,15 @@
+import { useEffect, useState } from "react";
 import { getChains, getTokens } from "@lifi/sdk";
 import { useWallets } from "@privy-io/react-auth";
 import { useSendTransaction } from "wagmi";
+import { ChainType } from "@lifi/sdk";
+import { parseEther } from "viem";
 
+import { useApi } from "./components/ApiContextProvider";
 import TokenTable, { TokenType } from "./components/TokenTable";
 import BuyTokenModal from "./components/BuyTokenModal";
 import ConnectWallet from "./components/ConnectWallet";
-
-import { useEffect, useState } from "react";
 import logo from "../public/logo4.png";
-import { ChainType } from "@lifi/sdk";
-import { parseEther } from "viem";
-import { useApi } from "./components/ApiContextProvider";
 
 function BuyTokenApp() {
   const { fetchRequest, isBorrowToken } = useApi()
@@ -87,62 +86,44 @@ function BuyTokenApp() {
   async function handleBuyToken(token: TokenType) {
     try {
       // get walletdata
-      const mockWalletAddress = '0x0000000000000000000000009cb16f99eb162bf6f970791ba90bbf30c1cd1929' //address
-      const walletData = await fetchRequest({ url: `https://api.smoke.money/api/walletdata/${mockWalletAddress}`, model: "BorrowToken" });
-      console.log("🚀 ~walletData:", walletData);
+      const sand_address = '0x0000000000000000000000009cb16f99eb162bf6f970791ba90bbf30c1cd1929'
+      const _sand_address = '0x9cb16f99eb162bf6f970791ba90bbf30c1cd1929'
+      const walletData = await fetchRequest({ url: `https://mainnet.smoke.money/api/walletdata/${sand_address}`, model: "BorrowToken" });
 
       // qoute transaction get info
       const qouteReqBody: any = {
-        fromChain: 8453,
-        toChain: 8453, //token.chainId,
         fromToken: "ETH",
-        toToken: '0x7C4faB325f0D76b2bd3Ae0B5964e5C8F6caCaf92', //token?.address,
-        fromAddress: '0x552008c0f6870c2f77e5cC1d2eb9bdff03e30Ea0',
-        fromAmount: 1000000000000000
+        toChain: token.chainId,
+        toToken: token?.address,
+        fromAddress: _sand_address,
+        fromChain: selectedChain.id,
+        fromAmount: parseEther(token.amount)?.toString(),
       }
-
-      // https://li.quest/v1/quote?fromChain=8453&toChain=8453&fromToken=ETH&toToken=0x7C4faB325f0D76b2bd3Ae0B5964e5C8F6caCaf92&
-      // fromAddress=0x552008c0f6870c2f77e5cC1d2eb9bdff03e30Ea0&fromAmount=1000000000000000
 
       const queryString = new URLSearchParams(qouteReqBody).toString();
       const quoteRes = await fetchRequest({ url: `https://li.quest/v1/quote?${queryString}`, model: "BorrowToken" })
-      console.log("🚀 ~ quoteRes:", quoteRes);
 
-      // 2. get nft meta data
       const borrowReqBody = {
-        walletAddress: "0x0000000000000000000000009cb16f99eb162bf6f970791ba90bbf30c1cd1929",
-        nftId: "3",
-        amount: "100000000000",
-        chainId: "30111",
-        recipient: "0x0000000000000000000000009cb16f99eb162bf6f970791ba90bbf30c1cd1929",
+        recipient: _sand_address,
+        amount: parseEther(token.amount)?.toString(),
+        walletAddress: _sand_address,
+        nftId: walletData?.[0]?.id,
+        chainId: selectedChain?.id,
       };
 
-      console.log("🚀 ~ borrowReqBody:", borrowReqBody)
-
       const borrowRes = await fetchRequest({
-        url: 'https://api.smoke.money/api/borrow', 
+        url: 'https://mainnet.smoke.money/api/borrow',
         body: borrowReqBody,
         method: "POST",
         model: "BorrowToken"
       })
 
-      console.log("🚀 ~ borrowRes:", borrowRes)
-
-
-      const sendTransactionRes = await sendTransactionAsync({
-        data: quoteRes?.transactionRequest,
-        to: "0x552008c0f6870c2f77e5cC1d2eb9bdff03e30Ea0",
-        value: parseEther(token.amount),
-      });
-
-      console.log("🚀 ~ sendTransactionRes:", sendTransactionRes)
-
-      // sendTransaction({
-      //   to: "0x7C4faB325f0D76b2bd3Ae0B5964e5C8F6caCaf92",
-      //   value: parseEther("0.01"),
-      // });
+      if (quoteRes?.transactionRequest && borrowRes?.status === "borrow_approved") {
+        const sendTransactionRes = await sendTransactionAsync(quoteRes.transactionRequest);
+        console.log("🚀 ~ handleBuyToken ~ sendTransactionRes:", sendTransactionRes)
+      }
     } catch (error) {
-
+      console.error("🚀 ~ handleBuyToken ~ error:", error)
     }
   }
 

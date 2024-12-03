@@ -4,6 +4,7 @@ import CrossChainLendingApp from "./CrossChainLendingApp";
 import { usePrivy } from "@privy-io/react-auth";
 
 import LifiComponent from "./components/LifiComponent";
+import BuyTokenApp from "./BuyTokenApp";
 
 function App() {
   const { authenticated } = usePrivy();
@@ -19,8 +20,9 @@ function App() {
 
   return (
     <>
-      <CrossChainLendingApp />
-      {authenticated && <LifiComponent />}
+      {/* <CrossChainLendingApp /> */}
+
+      <BuyTokenApp />
     </>
   );
 }

@@ -10,7 +10,7 @@ export interface TokenType {
   name: string;
   priceUSD: string;
   symbol: string;
-  amount?: number;
+  amount: string;
 }
 
 interface TokenTableProps {

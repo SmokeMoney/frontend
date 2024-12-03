@@ -1,29 +1,28 @@
-// import Header from "./component/header"
+import { getChains, getTokens } from "@lifi/sdk";
+import { useWallets } from "@privy-io/react-auth";
+import { useSendTransaction } from "wagmi";
+
 import TokenTable, { TokenType } from "./components/TokenTable";
 import BuyTokenModal from "./components/BuyTokenModal";
 import ConnectWallet from "./components/ConnectWallet";
 
 import { useEffect, useState } from "react";
 import logo from "../public/logo4.png";
-import { getChains, getTokens } from "@lifi/sdk";
-import { useWallets, usePrivy } from "@privy-io/react-auth";
 import { ChainType } from "@lifi/sdk";
-import { useSendTransaction, useAccount } from "wagmi";
 import { parseEther } from "viem";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { useApi } from "./components/ApiContextProvider";
 
 function BuyTokenApp() {
-  const { ready, wallets } = useWallets();
-  const { sendTransaction } = useSendTransaction();
+  const { fetchRequest, isBorrowToken } = useApi()
+  const { wallets } = useWallets();
+  const { sendTransactionAsync } = useSendTransaction();
 
   const [chains, setChains] = useState<any>([]);
-  const [selectedChain, setSelectedChain] = useState<any>();
   const [tokens, setTokens] = useState<any>([]);
+  const [selectedChain, setSelectedChain] = useState<any>();
   const [selectedToken, setSelectedToken] = useState<any>(null);
+
+  const address = wallets?.length > 0 && wallets?.[0].address;
 
   /**
    * when connected wallet get all chain
@@ -31,7 +30,6 @@ function BuyTokenApp() {
   useEffect(() => {
     if (wallets?.length > 0) {
       _getChains();
-      fetchTokenData(wallets?.[0]?.address);
     }
   }, [wallets]);
 
@@ -51,25 +49,7 @@ function BuyTokenApp() {
         setChains(_res);
         setSelectedChain(_res[0]);
       }
-    } catch (error) {}
-  }
-
-  async function fetchTokenData(address: string) {
-    try {
-      const response = await fetch(
-        `https://api.smoke.money/api/walletdata/${address}`
-        // `https://api.smoke.money/api/walletdata/${address}`
-      );
-
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Failed to fetch token data:", error);
-      return null;
-    }
+    } catch (error) { }
   }
 
   async function getTokensFilterByChainType(chainType: any) {
@@ -82,61 +62,60 @@ function BuyTokenApp() {
   }
 
   async function handleBuyToken(token: TokenType) {
-    const responce = await fetch(
-      `https://li.quest/v1/quote?fromChain=8453&toChain=${
-        token?.chainId
-      }&fromToken=ETH&toToken=${
-        token?.address
-      }&fromAddress=0x552008c0f6870c2f77e5cC1d2eb9bdff03e30Ea0&fromAmount=${parseEther(
-        token?.amount
-      )}`
-    );
+    try {
+      // get walletdata
+      const walletData = await fetchRequest({ url: `https://api.smoke.money/api/walletdata/${address}`, model: "BorrowToken" });
 
-    const data = await responce.json();
+      console.log("🚀 ~ handleBuyToken ~ walletData:", walletData)
+      // qoute transaction get info
+      const qouteReqBody: any = {
+        fromChain: 8453,
+        toChain: token.chainId,
+        fromToken: "ETH",
+        toToken: token?.address,
+        fromAddress: '0x9cb16f99eb162bf6f970791ba90bbf30c1cd1929',
+        fromAmount: parseEther(token.amount)
+      }
 
-    // fromChain=8453   1
-    // toChain=8453
-    // fromToken=ETH
-    // toToken=0x7C4faB325f0D76b2bd3Ae0B5964e5C8F6caCaf92
-    // fromAddress=0x552008c0f6870c2f77e5cC1d2eb9bdff03e30Ea0
-    // fromAmount=1000000000000000
-    // );
+      console.log("🚀 ~ handleBuyToken ~ qouteReqBody:", qouteReqBody)
 
-    const smokResponse = await fetch("https://api.smoke.money/api/borrow", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        walletAddress:
-          "0x0000000000000000000000009cb16f99eb162bf6f970791ba90bbf30c1cd1929",
+      const queryString = new URLSearchParams(qouteReqBody).toString();
+      console.log("🚀 ~ handleBuyToken ~ queryString:", queryString)
+      const quoteRes = await fetchRequest({ url: `https://li.quest/v1/quote?${queryString}`, model: "BorrowToken" })
+
+      // 2. get nft meta data
+      const borrowReqBody = {
+        walletAddress: "0x0000000000000000000000009cb16f99eb162bf6f970791ba90bbf30c1cd1929",
         nftId: "3",
         amount: "100000000000",
         chainId: "30111",
-        recipient:
-          "0x0000000000000000000000009cb16f99eb162bf6f970791ba90bbf30c1cd1929",
-      }),
-    });
+        recipient: "0x0000000000000000000000009cb16f99eb162bf6f970791ba90bbf30c1cd1929",
+      };
+      console.log("🚀 ~ handleBuyToken ~ borrowReqBody:", borrowReqBody)
 
-    const result = await smokResponse.json();
+      const borrowRes = await fetchRequest({
+        url: 'https://api.smoke.money/api/borrow', body: borrowReqBody,
+        method: "POST",
+        model: "BorrowToken"
+      })
 
-    if (result?.status === "borrow_approved" && responce?.status === 200) {
-      try {
-        // sendTransaction({
-        //   to: "0x7C4faB325f0D76b2bd3Ae0B5964e5C8F6caCaf92",
-        //   value: parseEther("0.01"),
-        // });
+      console.log("🚀 ~ handleBuyToken ~ borrowRes:", borrowRes)
 
-        console.log(data?.transactionRequest);
 
-        sendTransaction({
-          data: data?.transactionRequest,
-          to: "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE",
-          value: parseEther(token?.amount),
-        });
-      } catch (error) {
-        console.error(error);
-      }
+      const sendTransactionRes = await sendTransactionAsync({
+        data: quoteRes?.transactionRequest,
+        to: "0x552008c0f6870c2f77e5cC1d2eb9bdff03e30Ea0",
+        value: parseEther(token.amount),
+      });
+
+      console.log("🚀 ~ handleBuyToken ~ sendTransactionRes:", sendTransactionRes)
+
+      // sendTransaction({
+      //   to: "0x7C4faB325f0D76b2bd3Ae0B5964e5C8F6caCaf92",
+      //   value: parseEther("0.01"),
+      // });
+    } catch (error) {
+
     }
   }
 
@@ -172,6 +151,7 @@ function BuyTokenApp() {
             onClose={() => setSelectedToken(null)}
             token={selectedToken}
             onSwapToken={handleBuyToken}
+            loading={isBorrowToken || false}
           />
 
           <TokenTable

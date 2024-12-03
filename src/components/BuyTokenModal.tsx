@@ -8,6 +8,7 @@ export interface IModalsProps {
   onClose: () => void;
   token?: TokenType;
   onSwapToken: (value: any) => void;
+  loading: boolean
 }
 
 const BuyTokenModal = ({
@@ -15,8 +16,9 @@ const BuyTokenModal = ({
   onClose,
   token,
   onSwapToken,
+  loading,
 }: IModalsProps) => {
-  const [ethAmount, setEthAmount] = useState<any>(0);
+  const [ethAmount, setEthAmount] = useState<string>('');
 
   useEffect(() => {
     if (isOpen) {
@@ -25,6 +27,12 @@ const BuyTokenModal = ({
       document.body.style.overflow = "auto";
     }
   }, [isOpen]);
+
+  function handleSubmit() {
+    if (ethAmount && Number(ethAmount)) {
+      onSwapToken({ amount: ethAmount, ...token })
+    }
+  }
 
   return (
     <Transition show={isOpen}>
@@ -119,42 +127,40 @@ const BuyTokenModal = ({
 
               <div className="bg-[#252B36] p-3 rounded-xl border border-[#252B36] hover:border-black flex flex-col gap-4 mt-2">
                 <div className="flex flex-row justify-between items-center">
-                  <div className="flex flex-row items-center gap-4 bg-[#2D3542] rounded-md p-1 px-3">
+                  <div className="flex flex-row items-center gap-2 bg-[#2D3542] rounded-md p-1 px-3">
                     <div className="flex flex-row items-center gap-2">
                       <img
                         src={token?.logoURI}
                         alt={token?.name}
-                        className="w-6 h-6"
+                        className="w-6 h-6 rounded-full"
                       />
 
-                      <div className="">
-                        <p className="text-right text-[#717A8C] text-xs">
-                          1 {token?.symbol} = {token?.priceUSD}USD
-                        </p>
-                      </div>
+                      <p className="text-white">{token?.symbol}</p>
                     </div>
 
-                    <p className="text-white">{token?.symbol}</p>
                   </div>
+                  <input
+                    disabled
+                    className="text-3xl text-right text-[#717A8C] outline-none bg-transparent w-1/2"
+                    placeholder="0.00"
+                  />
                 </div>
-                <input
-                  disabled
-                  className="text-3xl text-right text-[#717A8C] outline-none bg-transparent w-1/2"
-                  placeholder="0.00"
-                />
-              </div>
 
-              <div className="">
                 <p className="text-right text-[#717A8C] text-xs">
-                  1 {token?.symbol} = {token?.priceUSD}USD
+                  1 {token?.symbol} ≈$ {token?.priceUSD}
                 </p>
               </div>
 
               <div className="flex flex-row justify-center mt-6">
                 <button
-                  className="bg-yellow-400 hover:opacity-80 p-3 rounded-xl px-5 w-full"
-                  onClick={() => onSwapToken({ amount: ethAmount, ...token })}
+                  className="bg-yellow-400 hover:opacity-80 p-3 rounded-xl px-5 w-full relative"
+                  onClick={handleSubmit}
+                  disabled={loading}
                 >
+                  {loading && <div className="absolute left-4 top-0 bottom-0 flex flex-row items-center animate-spin" children={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20.5108 3.504V7.50399M20.5108 7.50399L19.1536 5.94511C16.9593 3.53663 13.5293 2.40745 10.165 3.3089C5.36385 4.59538 2.51461 9.53041 3.80109 14.3316C5.08757 19.1328 10.0226 21.982 14.8238 20.6956C16.555 20.2317 18.0324 19.2935 19.1536 18.0582M20.5108 7.50399H16.5108" stroke="black" stroke-width="null" stroke-linecap="round" stroke-linejoin="round"></path>
+                  </svg>} />}
+
                   <p className="text-lg text-[#2D3542]">Borrow and Swap</p>
                 </button>
               </div>

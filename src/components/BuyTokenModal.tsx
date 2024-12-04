@@ -13,6 +13,8 @@ export interface IModalsProps {
   chain: any
 }
 
+const ETH_USD_PRICE = 3600;
+
 const BuyTokenModal = ({
   isOpen,
   onClose,
@@ -55,7 +57,7 @@ const BuyTokenModal = ({
             >
               <span className="text-white">x</span>
             </div>
-            <div className="w-full p-6 bg-[#2D3542]  rounded-xl">
+            <div className="w-full p-6 bg-[#2D3542] rounded-xl">
               <div className="bg-[#252B36] p-3 rounded-xl border border-[#252B36] hover:border-black hover:shadow-xl flex flex-col gap-4">
                 <div className="flex flex-row justify-between items-center">
                   <div className="flex flex-row items-center gap-4 bg-[#2D3542] rounded-md p-1 px-3 cursor-not-allowed">
@@ -73,11 +75,11 @@ const BuyTokenModal = ({
                   />
                 </div>
 
-                <div className="flex flex-row justify-between items-center">
-                  <p className="text-[#717A8C] text-xs">
+                <div className="flex flex-row justify-end items-center">
+                  {/* <p className="text-[#717A8C] text-xs">
                     Balance: 2.8989 ETH (MAX)
-                  </p>
-                  <p className="text-[#717A8C] text-xs">≈$ 6726.2307</p>
+                  </p> */}
+                  <p className="text-[#717A8C] text-xs">≈$ {ETH_USD_PRICE}</p>
                 </div>
               </div>
 
@@ -129,7 +131,7 @@ const BuyTokenModal = ({
               </div>
 
               <div className="bg-[#252B36] p-3 rounded-xl border border-[#252B36] flex flex-col gap-4 mt-2 hover:cursor-not-allowed">
-                <div className="flex flex-row justify-between items-center">
+                <div className="flex flex-row justify-between items-center flex-1">
                   <div className="flex flex-row items-center gap-2 bg-[#2D3542] rounded-md p-1 px-3">
                     <div className="flex flex-row items-center gap-2">
                       <img
@@ -142,7 +144,13 @@ const BuyTokenModal = ({
                     </div>
 
                   </div>
-                  <p className="text-3xl text-right text-[#717A8C] outline-none bg-transparent w-1/2">0.00</p>
+
+                  <input
+                    disabled
+                    className="text-3xl text-right text-[#fff] outline-none bg-transparent w-3/4"
+                    value={((Number(ethAmount) * 3600) / Number(token?.priceUSD)).toFixed(8) || ''}
+                    placeholder="0.00"
+                  />
                 </div>
 
                 <p className="text-right text-[#717A8C] text-xs">

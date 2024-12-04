@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { getChains, getTokens } from "@lifi/sdk";
 import { useWallets } from "@privy-io/react-auth";
 import { useSendTransaction } from "wagmi";
-import { ChainType } from "@lifi/sdk";
+import { ChainType, getChains, getTokens } from "@lifi/sdk";
 import { parseEther } from "viem";
 
 import { useApi } from "./components/ApiContextProvider";
@@ -21,7 +20,7 @@ function BuyTokenApp() {
   const [selectedChain, setSelectedChain] = useState<any>();
   const [selectedToken, setSelectedToken] = useState<any>(null);
 
-  const address = wallets?.length > 0 && wallets?.[0].address;
+  const address = (wallets?.length > 0 && wallets?.[0].address) || "";
 
   /**
    * when connected wallet get all chain
@@ -84,15 +83,24 @@ function BuyTokenApp() {
    * Catches and logs any errors that occur during execution.
    */
   async function handleBuyToken(token: TokenType) {
+    if (!token || !token.amount || !token.address) {
+      console.error('Invalid token data');
+      return;
+    }
+  
     try {
-      const smokAddress = `0x000000000000000000000000${address?.slice(-2)}`;
-      // get walletdata
+      const cleanAddress = address.replace(/^0x/, '');
+      const paddedAddress = '0x' + cleanAddress.padStart(64, '0');
+  
       const walletData = await fetchRequest({
-        url: `https://mainnet.smoke.money/api/walletdata/${smokAddress}`,
+        url: `https://mainnet.smoke.money/api/walletdata/${paddedAddress}`,
         model: "BorrowToken",
       });
-
-      // qoute transaction get info
+  
+      if (!walletData || walletData.length === 0) {
+        throw new Error('No wallet data found');
+      }
+  
       const qouteReqBody: any = {
         fromToken: "ETH",
         toChain: token.chainId,
@@ -101,42 +109,46 @@ function BuyTokenApp() {
         fromChain: selectedChain.id,
         fromAmount: parseEther(token.amount)?.toString(),
       };
-
+  
       const queryString = new URLSearchParams(qouteReqBody).toString();
+      
       const quoteRes = await fetchRequest({
         url: `https://li.quest/v1/quote?${queryString}`,
         model: "BorrowToken",
       });
-
+  
+      if (!quoteRes?.transactionRequest) {
+        throw new Error('No transaction request found in quote');
+      }
+  
       const borrowReqBody = {
-        recipient: smokAddress,
+        recipient: paddedAddress,
         amount: parseEther(token.amount)?.toString(),
-        walletAddress: smokAddress,
-        nftId: walletData?.[0]?.id,
+        walletAddress: paddedAddress,
+        nftId: walletData[0].id,
         chainId: selectedChain?.id,
       };
-
+      console.log("🚀 ~ handleBuyToken ~ borrowReqBody:", borrowReqBody)
+  
       const borrowRes = await fetchRequest({
         url: "https://mainnet.smoke.money/api/borrow",
         body: borrowReqBody,
         method: "POST",
         model: "BorrowToken",
       });
-
-      if (
-        quoteRes?.transactionRequest &&
-        borrowRes?.status === "borrow_approved"
-      ) {
-        const sendTransactionRes = await sendTransactionAsync(
-          quoteRes.transactionRequest
-        );
-        console.log(
-          "🚀 ~ handleBuyToken ~ sendTransactionRes:",
-          sendTransactionRes
-        );
+  
+      if (borrowRes?.status !== "borrow_approved") {
+        throw new Error('Borrow not approved');
       }
+  
+      const sendTransactionRes = await sendTransactionAsync(
+        quoteRes.transactionRequest
+      );
+  
+      return sendTransactionRes;
+  
     } catch (error) {
-      console.error("🚀 ~ handleBuyToken ~ error:", error);
+      console.error('Token purchase failed:', error);
     }
   }
 

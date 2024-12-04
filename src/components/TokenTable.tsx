@@ -22,28 +22,28 @@ const TokenTable = ({ tokens, handleBuyToken }: TokenTableProps) => {
     <Table.Root>
       <Table.Header>
         <Table.Row className="">
-          <Table.ColumnHeaderCell className="text-white">
+          <Table.ColumnHeaderCell className="text-[#717A8C]">
             LOGO
           </Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell className="text-white">
+          <Table.ColumnHeaderCell className="text-[#717A8C]">
             COINKEY
           </Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell className="text-white">
+          <Table.ColumnHeaderCell className="text-[#717A8C]">
             ADDRESS
           </Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell className="text-white">
+          <Table.ColumnHeaderCell className="text-[#717A8C]">
             CHAINID
           </Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell className="text-white">
+          <Table.ColumnHeaderCell className="text-[#717A8C]">
             DECIMALS
           </Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell className="text-white">
+          <Table.ColumnHeaderCell className="text-[#717A8C]">
             PRICEUSD
           </Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell className="text-white">
+          <Table.ColumnHeaderCell className="text-[#717A8C]">
             SYMBOL
           </Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell className="text-white">
+          <Table.ColumnHeaderCell className="text-[#717A8C]">
             ACTION
           </Table.ColumnHeaderCell>
         </Table.Row>
@@ -56,7 +56,7 @@ const TokenTable = ({ tokens, handleBuyToken }: TokenTableProps) => {
             className="hover:opacity-70 hover:cursor-pointer h-10"
           >
             <Table.Cell
-              className="w-1/8"
+              className=""
               children={
                 <img
                   alt="logo"
@@ -65,22 +65,22 @@ const TokenTable = ({ tokens, handleBuyToken }: TokenTableProps) => {
                 />
               }
             />
-            <Table.Cell className="w-1/8 text-white">
+            <Table.Cell className=" text-[#717A8C]">
               {token?.coinKey}
             </Table.Cell>
-            <Table.Cell className="w-1/8 text-white">
+            <Table.Cell className=" text-[#717A8C]">
               {token?.address.substring(0, 6)}....{token.address.slice(-4)}
             </Table.Cell>
-            <Table.Cell className="w-1/8 text-white">
+            <Table.Cell className=" text-[#717A8C]">
               {token?.chainId}
             </Table.Cell>
-            <Table.Cell className="w-1/8 text-white">
+            <Table.Cell className=" text-[#717A8C]">
               {token?.decimals}
             </Table.Cell>
-            <Table.Cell className="w-1/8 text-white">
-              {token?.priceUSD}
+            <Table.Cell className=" text-[#717A8C]">
+              $ {Number(token?.priceUSD).toFixed(2)}
             </Table.Cell>
-            <Table.Cell className="w-1/8 text-white">
+            <Table.Cell className=" text-[#717A8C]">
               {token?.symbol}
             </Table.Cell>
             <Table.Cell>

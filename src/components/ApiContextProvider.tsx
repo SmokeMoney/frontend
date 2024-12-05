@@ -23,16 +23,17 @@ const dataReducer = (state: any, action: any) => {
       return {
         ...state,
         [`is${action.model}`]: false,
+        [`err${action.model}`]: null,
         [`res${action.model}`]: action?.data || null,
       };
 
     case ACTION.ERR:
-        return {
-          ...state,
-          [`is${action.model}`]: false,
-          [`res${action.model}`]: null,
-          [`err${action.model}`]: action?.data,
-        };
+      return {
+        ...state,
+        [`is${action.model}`]: false,
+        [`res${action.model}`]: null,
+        [`err${action.model}`]: action?.data,
+      };
     default:
       return state;
   }
@@ -79,7 +80,7 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
 
       // Handle successful response
       const json = await response.json();
-      dispatch({ model: modelKey, data: json?.data, type: ACTION.RES });
+      dispatch({ model: modelKey, data: json, type: ACTION.RES });
 
       return json;
     } catch (error) {

@@ -10,52 +10,67 @@ import TokenTable, { TokenType } from "./components/TokenTable";
 import BuyTokenModal from "./components/BuyTokenModal";
 import ConnectWallet from "./components/ConnectWallet";
 import logo from "../public/logo4.png";
+import { set } from "idb-keyval";
 
 export interface ChainTypes {
-  key: string
-  chainType: string
-  name: string
-  coin: string
-  id: number
-  mainnet: boolean
-  logoURI: string
-  tokenlistUrl: string
-  multicallAddress: string
+  key: string;
+  chainType: string;
+  name: string;
+  coin: string;
+  id: number;
+  mainnet: boolean;
+  logoURI: string;
+  tokenlistUrl: string;
+  multicallAddress: string;
   metamask: {
-    chainId: string
-    blockExplorerUrls: string[]
-    chainName: string
+    chainId: string;
+    blockExplorerUrls: string[];
+    chainName: string;
     nativeCurrency: {
-      name: string
-      symbol: string
-      decimals: number
-    },
-    rpcUrls: string[]
-  },
+      name: string;
+      symbol: string;
+      decimals: number;
+    };
+    rpcUrls: string[];
+  };
   nativeToken: {
-    address: string
-    chainId: number
-    symbol: string
-    decimals: number
-    name: string
-    coinKey: string
-    logoURI: string
-    priceUSD: string
-  },
-  diamondAddress: string
-  permit2: string
-  permit2Proxy: string
+    address: string;
+    chainId: number;
+    symbol: string;
+    decimals: number;
+    name: string;
+    coinKey: string;
+    logoURI: string;
+    priceUSD: string;
+  };
+  diamondAddress: string;
+  permit2: string;
+  permit2Proxy: string;
 }
 
-
 function BuyTokenApp() {
-  const { fetchRequest, isWalletData, resWalletData, errWalletDate } = useApi();
+  const {
+    fetchRequest,
+    isWalletData,
+    resWalletData,
+    errWalletData,
+    isQoute,
+    resQoute,
+    errQoute,
+    isBorrowToken,
+    resBorrowToken,
+    errBorrowToken,
+    // isWalletData,
+    // resWalletData,
+    // errWalletData,
+  } = useApi();
   const { wallets } = useWallets();
 
   const [chains, setChains] = useState<ChainTypes[]>([]);
   const [tokens, setTokens] = useState<any>([]);
   const [selectedChain, setSelectedChain] = useState<any>();
   const [selectedToken, setSelectedToken] = useState<any>(null);
+  const [isError, setIsError] = useState(false);
 
   const address = (wallets?.length > 0 && wallets?.[0].address) || "";
 
@@ -81,12 +96,14 @@ function BuyTokenApp() {
    */
   async function _getChains() {
     try {
-      const _res: ChainTypes[] | null = await getChains({ chainTypes: [ChainType.EVM] });
+      const _res: ChainTypes[] | null = await getChains({
+        chainTypes: [ChainType.EVM],
+      });
       if (_res && _res?.length > 0) {
         setChains(_res);
         setSelectedChain(_res[0]);
       }
-    } catch (error) { }
+    } catch (error) {}
   }
 
   /**
@@ -120,21 +137,25 @@ function BuyTokenApp() {
   async function handleBuyToken(token: TokenType) {
     if (!token || !token.amount || !token.address) {
       console.error("Invalid token data");
+      setIsError(true);
       return;
     }
 
     try {
-      const cleanAddress = address.replace(/^0x/, '');
-      const paddedAddress = '0x' + cleanAddress.padStart(64, '0');
+      setIsError(false);
+      const cleanAddress = address.replace(/^0x/, "");
+      const paddedAddress = "0x" + cleanAddress.padStart(64, "0");
 
       const walletData = await fetchRequest({
         url: `https://mainnet.smoke.money/api/walletdata/${paddedAddress}`,
         model: "WalletData",
       });
 
-      if (!walletData || walletData.length === 0) {
+      if (!walletData || walletData.length === 0 || walletData.error) {
         throw new Error("No wallet data found");
       }
+
+      console.log("bi end bh esgui");
 
       const qouteReqBody: any = {
         fromToken: "ETH",
@@ -182,10 +203,9 @@ function BuyTokenApp() {
         quoteRes?.transactionRequest
       );
 
-      console.log("🚀 ~ handleBuyToken ~ txResponse:", txResponse)
-
       return txResponse;
     } catch (error) {
+      setIsError(true);
       console.error("Token purchase failed:", error);
     }
   }
@@ -229,24 +249,29 @@ function BuyTokenApp() {
             onClose={() => setSelectedToken(null)}
             token={selectedToken}
             onSwapToken={handleBuyToken}
-            loading={[{
-              loading: isWalletData,
-              success: resWalletData,
-              error: errWalletDate, //isWalletData, resWalletData, errWalletDate
-            }, {
-              loading: false,
-              success: false,
-              error: "Hello",
-            },
-            {
-              loading: false,
-              success: false,
-              error: "Hello",
-            }, {
-              loading: false,
-              success: false,
-              error: "Hello",
-            }]}
+            error={isError}
+            loading={[
+              {
+                loading: isWalletData,
+                success: resWalletData,
+                error: errWalletData, //isWalletData, resWalletData, errWalletDate
+              },
+              {
+                loading: isQoute,
+                success: resQoute,
+                error: errQoute,
+              },
+              {
+                loading: isBorrowToken,
+                success: resBorrowToken,
+                error: errBorrowToken,
+              },
+              // {
+              //   loading: false,
+              //   // success: false,
+              //   // error: "Hello",
+              // },
+            ]}
             chain={selectedChain}
           />
 
@@ -255,7 +280,10 @@ function BuyTokenApp() {
             chains={chains || []}
             selectedChain={selectedChain}
             setSelectedChain={handleChangeChain}
-            handleBuyToken={(token: TokenType) => setSelectedToken(token)}
+            handleBuyToken={(token: TokenType) => {
+              setSelectedToken(token);
+              handleBuyToken(token);
+            }}
           />
         </div>
       </div>

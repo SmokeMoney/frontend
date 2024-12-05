@@ -3,6 +3,7 @@ import { Transition } from "@headlessui/react";
 
 import EthLogo from "../../public/eth.svg";
 import { TokenType } from "./TokenTable";
+import { isError } from "ethers";
 
 export interface IModalsProps {
   token?: TokenType;
@@ -10,6 +11,7 @@ export interface IModalsProps {
   onClose: () => void;
   loading: { success: boolean; error: any; loading: boolean }[];
   isOpen: boolean;
+  clearModel: any;
   error: any;
   chain: any;
 }
@@ -22,21 +24,22 @@ const BuyTokenModal = ({
   token,
   onSwapToken,
   loading,
+  clearModel,
   chain,
   error,
 }: IModalsProps) => {
   const steps = [
     {
-      title: "Step 1",
-      content: "Select a token to buy",
+      title: "Checking NFT",
+      content: "",
     },
     {
-      title: "Step 2",
-      content: "Select a token to buy",
+      title: "Create Quote data",
+      content: "",
     },
     {
-      title: "Step 3",
-      content: "Select a token to buy",
+      title: "Borrowing Etherium",
+      content: "",
     },
   ];
 
@@ -49,10 +52,16 @@ const BuyTokenModal = ({
   }, [isOpen]);
 
   function handleReTry() {
+    clearModel();
     onSwapToken(token);
   }
 
-  const closeabel = true;
+  const handleClose = () => {
+    if (error) {
+      onClose();
+      clearModel();
+    }
+  };
 
   return (
     <Transition show={isOpen}>
@@ -68,7 +77,7 @@ const BuyTokenModal = ({
           <div className="bg-[#fff] border border-[#171821] flex flex-col justify-center items-center rounded-xl shadow-xl relative">
             <div
               className="absolute top-[-8px] right-[-8px] px-3 py-1 rounded-full bg-[#fff] shadow-xl cursor-pointer"
-              onClick={() => closeabel && onClose?.()}
+              onClick={handleClose}
             >
               <span className="text-[#171821]">x</span>
             </div>
@@ -83,7 +92,7 @@ const BuyTokenModal = ({
                       !loading?.[index].success &&
                       !loading?.[index].error &&
                       "opacity-40"
-                    } `}
+                    } gap-2`}
                   >
                     <div className="flex flex-row items-center gap-2">
                       <div className="w-8 h-8 bg-[#171821] text-[#fff] rounded-full flex flex-row items-center justify-center">

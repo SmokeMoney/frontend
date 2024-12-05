@@ -63,6 +63,7 @@ function BuyTokenApp() {
     // isWalletData,
     // resWalletData,
     // errWalletData,
+    clearModelValue,
   } = useApi();
     console.log("🚀 ~ BuyTokenApp ~ errWalletData:", errWalletData)
   const { wallets } = useWallets();
@@ -119,6 +120,15 @@ function BuyTokenApp() {
     } catch (error) {
       console.error(error);
     }
+  }
+
+  /**
+   * Clears the model values in the state.
+   */
+  function clearModels() {
+    clearModelValue("WalletData");
+    clearModelValue("Qoute");
+    clearModelValue("BorrowToken");
   }
 
   /**
@@ -251,6 +261,7 @@ function BuyTokenApp() {
             token={selectedToken}
             onSwapToken={handleBuyToken}
             error={isError}
+            clearModel={clearModels}
             loading={[
               {
                 loading: isWalletData,

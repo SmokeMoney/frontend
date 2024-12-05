@@ -34,6 +34,12 @@ interface TokenTableProps {
   handleBuyToken: (token: TokenType) => void;
 }
 
+const columnsDic = {
+  "logoURI": "Token",
+  "priceUSD": "Price (USD)",
+  "action": "Action",
+}
+
 const columnHelper = createColumnHelper<TokenType>();
 const defaultColumns: any = [
   columnHelper.accessor('logoURI', {
@@ -45,14 +51,14 @@ const defaultColumns: any = [
         <p className="text-zinc-400 text-xs">{info.row.original.address?.slice(0, 4)}...{info.row.original.address?.slice(-4)}</p>
       </div>
     </div>,
-    header: () => <span className="text-zinc-400">Token</span>,
+    header: () => <span className="text-zinc-400">{columnsDic.logoURI}</span>,
   }),
   columnHelper.accessor('priceUSD', {
-    header: () => <span className="text-zinc-400">Price (USD)</span>,
+    header: () => <span className="text-zinc-400">{columnsDic.priceUSD}</span>,
     cell: (info: any) => <span className="text-zinc-400">$ {Number(info.getValue())?.toLocaleString()}</span>,
   }),
   columnHelper.accessor('action', {
-    header: () => <span className="text-zinc-400">Action</span>,
+    header: () => <span className="text-zinc-400">{columnsDic.action}</span>,
   }),
 ]
 
@@ -135,7 +141,8 @@ const TokenTable = ({ tokens, handleBuyToken, chains, setSelectedChain, selected
                               className: 'w-5 h-5 border cursor-pointer border-gray-300 checked:bg-red-200',
                             }}
                           />
-                          <label>{column.id}</label>
+                          {/** @ts-ignore */}
+                          <label>{columnsDic?.[column.id] || ''}</label>
                         </div>
                       )
                     })}

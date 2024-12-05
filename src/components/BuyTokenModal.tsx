@@ -8,7 +8,7 @@ export interface IModalsProps {
   token?: TokenType;
   onSwapToken: (value: any) => void;
   onClose: () => void;
-  loading: boolean;
+  loading: { success: boolean, error: any, loading: boolean }[];
   isOpen: boolean;
   chain: any
 }
@@ -23,8 +23,19 @@ const BuyTokenModal = ({
   loading,
   chain,
 }: IModalsProps) => {
-  const [ethAmount, setEthAmount] = useState<string>('');
-
+  const steps = [{
+    title: "Step 1",
+    content: "Select a token to buy"
+  }, {
+    title: "Step 2",
+    content: "Select a token to buy"
+  }, {
+    title: "Step 3",
+    content: "Select a token to buy"
+  }, {
+    title: "Step 4",
+    content: "Select a token to buy"
+  }]
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -33,11 +44,11 @@ const BuyTokenModal = ({
     }
   }, [isOpen]);
 
-  function handleSubmit() {
-    if (ethAmount && Number(ethAmount)) {
-      onSwapToken({ amount: ethAmount, ...token })
-    }
+  function handleReTry() {
   }
+
+  const closeabel = true
+
 
   return (
     <Transition show={isOpen}>
@@ -50,126 +61,33 @@ const BuyTokenModal = ({
           leaveFrom="opacity-100 transform scale-100"
           leaveTo="opacity-0 transform scale-95"
         >
-          <div className="full bg-[#2D3542] border border-[#2D3542] flex flex-col justify-center items-center rounded-xl shadow-xl relative">
+          <div className="bg-[#fff] border border-[#171821] flex flex-col justify-center items-center rounded-xl shadow-xl relative">
             <div
-              className="absolute top-[-8px] right-[-8px] px-3 py-1 rounded-full bg-[#2D3542]"
-              onClick={onClose}
+              className="absolute top-[-8px] right-[-8px] px-3 py-1 rounded-full bg-[#fff] shadow-xl cursor-pointer"
+              onClick={() => !closeabel && onClose?.()}
             >
-              <span className="text-white">x</span>
+              <span className="text-[#171821]">x</span>
             </div>
-            <div className="w-full p-6 bg-[#2D3542] rounded-xl">
-              <div className="bg-[#252B36] p-3 rounded-xl border border-[#252B36] hover:border-black hover:shadow-xl flex flex-col gap-4">
-                <div className="flex flex-row justify-between items-center">
-                  <div className="flex flex-row items-center gap-4 bg-[#2D3542] rounded-md p-1 px-3 cursor-not-allowed">
+
+            <div className="p-6 w-96 bg-[#fff] rounded-xl">
+              <div className="">
+                {steps.map((step, index) => (
+                  <div key={index} className={`flex flex-col ${!loading?.[index].loading && !loading?.[index].success && 'opacity-40'}`}>
                     <div className="flex flex-row items-center gap-2">
-                      <img src={EthLogo} />
-
-                      <p className="text-white">ETH</p>
-                    </div>
-                  </div>
-                  <input
-                    className="text-3xl text-right text-[#fff] outline-none bg-transparent w-1/2"
-                    value={ethAmount}
-                    placeholder="0.00"
-                    onChange={(e) => setEthAmount(e?.target?.value)}
-                  />
-                </div>
-
-                <div className="flex flex-row justify-end items-center">
-                  {/* <p className="text-[#717A8C] text-xs">
-                    Balance: 2.8989 ETH (MAX)
-                  </p> */}
-                  <p className="text-[#717A8C] text-xs">≈$ {ETH_USD_PRICE}</p>
-                </div>
-              </div>
-
-              <div className="relative" title={`ETH to ${token?.symbol}`}>
-                <div className="absolute left-0 right-0 bottom-[-24px]">
-                  <div className="flex flex-row justify-center items-center">
-                    <div className="p-2 bg-[#2D3542] rounded-full">
-                      <div className="shadow-2xl p-2 rounded-full bg-[#252B36]">
-                        <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M10.4498 6.71997L6.72974 3L3.00977 6.71997"
-                            stroke="#717A8C"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path
-                            d="M6.72949 21L6.72949 3"
-                            stroke="#717A8C"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path
-                            d="M13.5498 17.28L17.2698 21L20.9898 17.28"
-                            stroke="#717A8C"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path
-                            d="M17.2695 3V21"
-                            stroke="#717A8C"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
+                      <div className="w-8 h-8 bg-[#171821] text-[#fff] rounded-full flex flex-row items-center justify-center">
+                        {
+                          loading?.[index]?.loading ? (
+                            <span className={`${loading?.[index]?.loading ? "animate-spin" : ""}`}>-</span>
+                          ) : (
+                            <span className="">{index + 1}</span>
+                          )
+                        }
                       </div>
+                      <span className="text-[#171821]">{step.title}</span>
                     </div>
+                    <span className="text-[#171821]">{step.content}</span>
                   </div>
-                </div>
-              </div>
-
-              <div className="bg-[#252B36] p-3 rounded-xl border border-[#252B36] flex flex-col gap-4 mt-2 hover:cursor-not-allowed">
-                <div className="flex flex-row justify-between items-center flex-1">
-                  <div className="flex flex-row items-center gap-2 bg-[#2D3542] rounded-md p-1 px-3">
-                    <div className="flex flex-row items-center gap-2">
-                      <img
-                        src={token?.logoURI}
-                        alt={token?.name}
-                        className="w-6 h-6 rounded-full"
-                      />
-
-                      <p className="text-white">{token?.symbol}</p>
-                    </div>
-
-                  </div>
-
-                  <input
-                    disabled
-                    className="text-3xl text-right text-[#fff] outline-none bg-transparent w-3/4"
-                    value={((Number(ethAmount) * 3600) / Number(token?.priceUSD)).toFixed(8) || ''}
-                    placeholder="0.00"
-                  />
-                </div>
-
-                <p className="text-right text-[#717A8C] text-xs">
-                  1 {token?.symbol} ≈$ {token?.priceUSD}
-                </p>
-              </div>
-
-              <div className="flex flex-row justify-center mt-6">
-                <button
-                  className="bg-yellow-400 hover:opacity-80 p-3 rounded-xl px-5 w-full relative"
-                  onClick={handleSubmit}
-                  disabled={loading}
-                >
-                  {loading && <div className="absolute left-4 top-0 bottom-0 flex flex-row items-center animate-spin" children={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20.5108 3.504V7.50399M20.5108 7.50399L19.1536 5.94511C16.9593 3.53663 13.5293 2.40745 10.165 3.3089C5.36385 4.59538 2.51461 9.53041 3.80109 14.3316C5.08757 19.1328 10.0226 21.982 14.8238 20.6956C16.555 20.2317 18.0324 19.2935 19.1536 18.0582M20.5108 7.50399H16.5108" stroke="black" stroke-width="null" stroke-linecap="round" stroke-linejoin="round"></path>
-                  </svg>} />}
-
-                  <p className="text-lg text-[#2D3542]">Borrow and Swap</p>
-                </button>
+                ))}
               </div>
             </div>
           </div>

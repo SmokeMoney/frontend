@@ -2,7 +2,7 @@ import { useWallets, usePrivy } from '@privy-io/react-auth';
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 
-const ConnectWallet = ({ chains, setSelectedChain, selectedChain }: any) => {
+const ConnectWallet = () => {
   const { connectWallet } = usePrivy();
   const { ready, wallets } = useWallets();
 

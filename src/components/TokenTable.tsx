@@ -1,4 +1,3 @@
-import { Table } from "@radix-ui/themes";
 import { ChainTypes } from "../BuyTokenApp";
 
 import {
@@ -9,7 +8,6 @@ import {
 } from "@tanstack/react-table";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
-import * as Switch from "@radix-ui/react-switch";
 import { useRef, useState } from "react";
 import EhtLogo from "../../public/eth.svg";
 
@@ -293,59 +291,44 @@ const TokenTable = ({
       </div>
 
       <table className="overflow-auto max-h-[80vh]">
-        <thead className="sticky top-0 bg-[#14151d] z-3 text-[#717A8C] text-left">
-          {table.getHeaderGroups().map((headerGroup) => (
+        <thead className="sticky top-0 bg-[#14151d] z-3 text-[#717A8C] text-left ">
+          {table.getHeaderGroups().map(headerGroup => (
             <tr key={headerGroup.id} className="h-16">
-              {headerGroup.headers.map((header) => {
+              {headerGroup.headers.map(header => {
                 return (
                   <th key={header.id} className="">
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </th>
-                );
+                )
               })}
             </tr>
           ))}
+
         </thead>
         <tbody className="">
           {table.getRowModel().rows.map((row) => (
-            <tr
-              key={row.id}
-              className={`odd:bg-[#191a21] hover:bg-[#171821] h-14`}
-            >
-              {row.getVisibleCells().map((cell) => (
+            <tr key={row.id} className={`odd:bg-[#191a21] hover:bg-[#171821] h-14`}>
+              {row.getVisibleCells().map(cell => (
                 <td key={cell.id}>
                   {cell?.column?.id === "action" ? (
-                    <div
-                      title="Quick Buy"
-                      onClick={() => handleClickOnQuickBuy(cell.row.original)}
-                      className="inline-flex items-center p-1 z-3 rounded-full border gap-2 px-4 cursor-pointer"
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M12.8022 9.00005C12.8022 9.07683 12.8022 9.14203 12.8027 9.1995C12.8602 9.20002 12.9254 9.20005 13.0022 9.20005L19.144 9.20004C19.5178 9.19995 19.883 9.19986 20.1694 9.24211C20.4678 9.28613 20.9441 9.41174 21.1982 9.89668C21.4523 10.3816 21.2845 10.8448 21.1508 11.1152C21.0226 11.3746 20.8147 11.6749 20.6018 11.9822L14.4501 20.8692C14.1042 21.369 13.8 21.8085 13.5347 22.1031C13.3974 22.2556 13.2222 22.4256 13.0071 22.5421C12.767 22.6721 12.4535 22.746 12.1146 22.6401C11.7756 22.5342 11.5599 22.2951 11.4365 22.0516C11.326 21.8333 11.2787 21.5938 11.2525 21.3903C11.2021 20.9971 11.2021 20.4626 11.2022 19.8548L11.2022 14.8L4.8582 14.8001C4.48427 14.8001 4.11903 14.8002 3.83269 14.758C3.53428 14.714 3.05786 14.5884 2.80376 14.1034C2.54966 13.6183 2.7176 13.1552 2.85128 12.8848C2.97955 12.6253 3.18754 12.3251 3.40048 12.0177L9.55437 3.12992C9.90026 2.6303 10.2044 2.19091 10.4697 1.8964C10.6071 1.74397 10.7823 1.57402 10.9974 1.45754C11.2374 1.32755 11.5509 1.25377 11.8898 1.35965C12.2287 1.46553 12.4445 1.70464 12.5678 1.94814C12.6783 2.16636 12.7257 2.40585 12.7518 2.60934C12.8023 3.00249 12.8022 3.53688 12.8022 4.14453L12.8022 9.00005Z"
-                          fill="#A3A3A3"
-                        ></path>
-                      </svg>
+                    <div className="flex flex-row items-center gap-3">
+                      <div title="Quick Buy" onClick={() => handleClickOnQuickBuy(cell.row.original)} className="inline-flex items-center p-1 z-3 rounded-full border gap-2 px-4 cursor-pointer">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12.8022 9.00005C12.8022 9.07683 12.8022 9.14203 12.8027 9.1995C12.8602 9.20002 12.9254 9.20005 13.0022 9.20005L19.144 9.20004C19.5178 9.19995 19.883 9.19986 20.1694 9.24211C20.4678 9.28613 20.9441 9.41174 21.1982 9.89668C21.4523 10.3816 21.2845 10.8448 21.1508 11.1152C21.0226 11.3746 20.8147 11.6749 20.6018 11.9822L14.4501 20.8692C14.1042 21.369 13.8 21.8085 13.5347 22.1031C13.3974 22.2556 13.2222 22.4256 13.0071 22.5421C12.767 22.6721 12.4535 22.746 12.1146 22.6401C11.7756 22.5342 11.5599 22.2951 11.4365 22.0516C11.326 21.8333 11.2787 21.5938 11.2525 21.3903C11.2021 20.9971 11.2021 20.4626 11.2022 19.8548L11.2022 14.8L4.8582 14.8001C4.48427 14.8001 4.11903 14.8002 3.83269 14.758C3.53428 14.714 3.05786 14.5884 2.80376 14.1034C2.54966 13.6183 2.7176 13.1552 2.85128 12.8848C2.97955 12.6253 3.18754 12.3251 3.40048 12.0177L9.55437 3.12992C9.90026 2.6303 10.2044 2.19091 10.4697 1.8964C10.6071 1.74397 10.7823 1.57402 10.9974 1.45754C11.2374 1.32755 11.5509 1.25377 11.8898 1.35965C12.2287 1.46553 12.4445 1.70464 12.5678 1.94814C12.6783 2.16636 12.7257 2.40585 12.7518 2.60934C12.8023 3.00249 12.8022 3.53688 12.8022 4.14453L12.8022 9.00005Z" fill="#FFFF00" />
+                        </svg>
+                        <span className="text-zinc-400">{buyAmount || '0.0'}</span>
+                      </div>
 
-                      <img src={EhtLogo} className="w-5 h-5 rounded-full" />
-                      <span className="text-zinc-400">
-                        {buyAmount || "0.0"}
-                      </span>
+                      <div title="Buy token" className="bg-[#6A60E8] z-3 rounded-full border gap-2 p-1 px-4 cursor-pointer">
+                          <span className="text-white">Buy</span>
+                        </div>
                     </div>
-                  ) : (
-                    flexRender(cell.column.columnDef.cell, cell.getContext())
-                  )}
+                  ) : flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
             </tr>

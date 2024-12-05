@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import * as Popover from "@radix-ui/react-popover";
 import { ModeToggle } from "./custom/mode-toggle";
 import NFTSelector from "../components/NFTSelector";
 import FAQContent from "../components/custom/FAQ";
-
+import { usePrivy } from "@privy-io/react-auth";
 import logo from "/logo4.png";
 import { NFT } from "../CrossChainLendingApp";
 import "./Header.css";
@@ -19,7 +18,17 @@ const Header: React.FC<{
   isMobile: boolean;
 }> = ({ listNFTs, selectedNFT, setSelectedNFT, isMobile }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const { authenticated, login, logout, ready } = usePrivy();
 
+  const disableLogin = !ready || (ready && authenticated);
+
+  const handleSignOut = async () => {
+    await logout(); // Provided by Privy to log the user out
+  };
+
+  const handleLogin = async () => {
+    await login(); // Log in to Privy
+  };
   const toggleMenu = () => setIsOpen(!isOpen);
 
   const SmokeButton = () => (
@@ -63,7 +72,28 @@ const Header: React.FC<{
 
         <div className={`menu-items ${isOpen ? "open bg-popover" : ""}`}>
           <HStack className="connect-mode-toggle">
-            <ConnectButton />
+            {disableLogin ? (
+              <button
+                disabled={!disableLogin}
+                onClick={handleSignOut}
+                className={`${
+                  disableLogin ? "bg-gray-400 p-4 rounded text-white" : ""
+                }`}
+              >
+                sign out
+              </button>
+            ) : (
+              <button
+                disabled={disableLogin}
+                onClick={handleLogin}
+                className={`${
+                  disableLogin ? "bg-blue-500 p-4 rounded text-white" : ""
+                }`}
+              >
+                Log in
+              </button>
+            )}
+
             <ModeToggle />
           </HStack>
           {isMobile && <SmokeButton />}

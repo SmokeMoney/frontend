@@ -134,6 +134,8 @@ const CrossChainLendingApp: React.FC = () => {
   const { switchChain } = useSwitchChain();
   const chainId = useChainId();
 
+  console.log("asdf", selectedNFT);
+
   const { data: balanceData } = useReadContract({
     address: NFT_CONTRACT_ADDRESS,
     abi: coreNFTAbi,

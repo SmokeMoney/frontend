@@ -13,9 +13,9 @@ import {
   scrollSepolia,
   zkSyncSepoliaTestnet,
   lineaSepolia,
-  morphHolesky
+  morphHolesky,
 } from "wagmi/chains";
-import { walletConnect } from "wagmi/connectors";
+import { injected } from "wagmi/connectors";
 import { connectorsForWallets } from "@rainbow-me/rainbowkit";
 import {
   rainbowWallet,
@@ -36,7 +36,12 @@ const indexedDBStorage = {
   },
 };
 
-const connectors = connectorsForWallets(
+// connectors: [injected()],
+// client({ chain }) {
+//   return createClient({ chain, transport: http() });
+// },
+
+const walletConnectors = connectorsForWallets(
   [
     {
       groupName: "Recommended",
@@ -48,6 +53,10 @@ const connectors = connectorsForWallets(
     projectId: import.meta.env.VITE_WC_PROJECT_ID,
   }
 );
+
+const customConnectors = [injected()];
+
+const connectors = [...walletConnectors, ...customConnectors];
 
 export const config = createConfig({
   chains: [
@@ -63,7 +72,7 @@ export const config = createConfig({
     scrollSepolia,
     zkSyncSepoliaTestnet,
     lineaSepolia,
-    morphHolesky
+    morphHolesky,
   ],
   // connectors: [
   //   walletConnect({
@@ -72,7 +81,7 @@ export const config = createConfig({
   //   coinbaseWallet(),
   //   metaMask(),
   // ],
-  connectors: connectors,
+  connectors: customConnectors,
   transports: {
     [mainnet.id]: http(),
     [sepolia.id]: http(),

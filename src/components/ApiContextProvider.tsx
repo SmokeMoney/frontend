@@ -9,10 +9,11 @@ interface IApiContextRequestType {
 
 interface IApiType {
   [key: string]: any;
+  setModelValue: (model: string, value: any) => void;
   fetchRequest: (params: IApiContextRequestType) => Promise<any>;
 }
 
-const ACTION = { REQ: "REQ", RES: "RES", ERR: "ERR" };
+const ACTION = { REQ: "REQ", RES: "RES", ERR: "ERR", CLEAR: "CLEAR" };
 
 const dataReducer = (state: any, action: any) => {
   switch (action?.type) {
@@ -33,6 +34,15 @@ const dataReducer = (state: any, action: any) => {
         [`is${action.model}`]: false,
         [`res${action.model}`]: null,
         [`err${action.model}`]: action?.data,
+      };
+
+
+    case ACTION.CLEAR:
+      return {
+        ...state,
+        [`is${action.model}`]: false,
+        [`res${action.model}`]: null,
+        [`err${action.model}`]: null,
       };
     default:
       return state;
@@ -89,9 +99,13 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
     }
   };
 
+  function clearModelValue(model: string) {
+    dispatch({ model: model, type: ACTION.CLEAR });
+  }
+
   return (
     <ApiContext.Provider
-      value={{ ...state, fetchRequest }}
+      value={{ ...state, fetchRequest, clearModelValue }}
       children={children}
     />
   );

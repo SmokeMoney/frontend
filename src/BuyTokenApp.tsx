@@ -3,6 +3,7 @@ import { useWallets } from "@privy-io/react-auth";
 import { useSendTransaction } from "wagmi";
 import { ChainType, getChains, getTokens } from "@lifi/sdk";
 import { parseEther } from "viem";
+import { BrowserProvider } from "ethers";
 
 import { useApi } from "./components/ApiContextProvider";
 import TokenTable, { TokenType } from "./components/TokenTable";
@@ -13,7 +14,7 @@ import logo from "../public/logo4.png";
 function BuyTokenApp() {
   const { fetchRequest, isBorrowToken } = useApi();
   const { wallets } = useWallets();
-  const { sendTransactionAsync } = useSendTransaction();
+  const { sendTransaction } = useSendTransaction();
 
   const [chains, setChains] = useState<any>([]);
   const [tokens, setTokens] = useState<any>([]);
@@ -83,24 +84,25 @@ function BuyTokenApp() {
    * Catches and logs any errors that occur during execution.
    */
   async function handleBuyToken(token: TokenType) {
+    console.log(token);
     if (!token || !token.amount || !token.address) {
-      console.error('Invalid token data');
+      console.error("Invalid token data");
       return;
     }
-  
+
     try {
-      const cleanAddress = address.replace(/^0x/, '');
-      const paddedAddress = '0x' + cleanAddress.padStart(64, '0');
-  
+      const cleanAddress = address.replace(/^0x/, "").toLocaleLowerCase();
+      const paddedAddress = "0x" + cleanAddress.padStart(64, "0");
+
       const walletData = await fetchRequest({
         url: `https://mainnet.smoke.money/api/walletdata/${paddedAddress}`,
         model: "BorrowToken",
       });
-  
+
       if (!walletData || walletData.length === 0) {
-        throw new Error('No wallet data found');
+        throw new Error("No wallet data found");
       }
-  
+
       const qouteReqBody: any = {
         fromToken: "ETH",
         toChain: token.chainId,
@@ -109,46 +111,47 @@ function BuyTokenApp() {
         fromChain: selectedChain.id,
         fromAmount: parseEther(token.amount)?.toString(),
       };
-  
+
       const queryString = new URLSearchParams(qouteReqBody).toString();
-      
+
       const quoteRes = await fetchRequest({
         url: `https://li.quest/v1/quote?${queryString}`,
         model: "BorrowToken",
       });
-  
+
       if (!quoteRes?.transactionRequest) {
-        throw new Error('No transaction request found in quote');
+        throw new Error("No transaction request found in quote");
       }
-  
+
       const borrowReqBody = {
         recipient: paddedAddress,
         amount: parseEther(token.amount)?.toString(),
         walletAddress: paddedAddress,
-        nftId: walletData[0].id,
-        chainId: selectedChain?.id,
+        nftId: walletData[0].id?.toString(),
+        chainId: "30111",
       };
-      console.log("🚀 ~ handleBuyToken ~ borrowReqBody:", borrowReqBody)
-  
+
       const borrowRes = await fetchRequest({
         url: "https://mainnet.smoke.money/api/borrow",
         body: borrowReqBody,
         method: "POST",
         model: "BorrowToken",
       });
-  
+
       if (borrowRes?.status !== "borrow_approved") {
-        throw new Error('Borrow not approved');
+        throw new Error("Borrow not approved");
       }
-  
-      const sendTransactionRes = await sendTransactionAsync(
-        quoteRes.transactionRequest
+
+      const provider = new BrowserProvider(window.ethereum); // Use BrowserProvider instead
+      const signer = await provider.getSigner();
+
+      const txResponse = await signer.sendTransaction(
+        quoteRes?.transactionRequest
       );
-  
-      return sendTransactionRes;
-  
+
+      return txResponse;
     } catch (error) {
-      console.error('Token purchase failed:', error);
+      console.error("Token purchase failed:", error);
     }
   }
 

@@ -1,9 +1,4 @@
-import React, {
-  createContext,
-  ReactNode,
-  useContext,
-  useReducer,
-} from "react";
+import React, { createContext, ReactNode, useContext, useReducer } from "react";
 
 interface IApiContextRequestType {
   method?: "GET" | "POST" | "PUT" | "DELETE";
@@ -46,7 +41,6 @@ const initinalState = {};
 export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
   const [state, dispatch]: any = useReducer(dataReducer, initinalState);
 
-
   const fetchRequest = async ({
     url,
     body,
@@ -62,6 +56,9 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
       // Fetch request configuration for formData and JSON data
       const response = await fetch(url, {
         method: method,
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(body),
       }).catch((err) => err);
 
@@ -84,7 +81,10 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
   };
 
   return (
-    <ApiContext.Provider value={{ ...state, fetchRequest }} children={children} />
+    <ApiContext.Provider
+      value={{ ...state, fetchRequest }}
+      children={children}
+    />
   );
 };
 

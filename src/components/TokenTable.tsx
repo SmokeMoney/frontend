@@ -37,17 +37,19 @@ interface TokenTableProps {
 const columnHelper = createColumnHelper<TokenType>();
 const defaultColumns: any = [
   columnHelper.accessor('logoURI', {
-    cell: info => <img src={info.getValue()} className="w-8 h-8 rounded-full" />,
+    cell: (info) => <div className="flex flex-row items-center gap-2 text-zinc-400 p-2">
+      <img src={info.getValue()} className="w-8 h-8 rounded-full" />
+
+      <div className="flex flex-col">
+        <p>{info.row.original.symbol} {`${info.row.original.name !== info.row.original.symbol ? `(${info.row.original.name})` : ''}`}</p>
+        <p className="text-zinc-400 text-xs">{info.row.original.address?.slice(0, 4)}...{info.row.original.address?.slice(-4)}</p>
+      </div>
+    </div>,
     header: () => <span className="text-zinc-400">Token</span>,
-    footer: info => info.column.id,
-  }),
-  columnHelper.accessor('name', {
-    header: () => <span className="text-zinc-400">Name</span>,
-    cell: info => <span className="text-zinc-400">{info.getValue()}</span>,
   }),
   columnHelper.accessor('priceUSD', {
     header: () => <span className="text-zinc-400">Price (USD)</span>,
-    cell: (info: any) => <span className="text-zinc-400">{Number(info.getValue())?.toFixed(3)}</span>,
+    cell: (info: any) => <span className="text-zinc-400">$ {Number(info.getValue())?.toLocaleString()}</span>,
   }),
   columnHelper.accessor('action', {
     header: () => <span className="text-zinc-400">Action</span>,
@@ -200,9 +202,8 @@ const TokenTable = ({ tokens, handleBuyToken, chains, setSelectedChain, selected
         </DropdownMenu.Root>
       </div>
 
-      <div className="overflow-auto max-h-[80vh]">
-        <table>
-          <thead className="sticky top-0 bg-[#14151d] z-3 text-[#717A8C">
+      <table className="overflow-auto max-h-[80vh]">
+          <thead className="sticky top-0 bg-[#14151d] z-3 text-[#717A8C] text-left">
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id} className="h-16">
                 {headerGroup.headers.map(header => {
@@ -242,7 +243,6 @@ const TokenTable = ({ tokens, handleBuyToken, chains, setSelectedChain, selected
             ))}
           </tbody>
         </table>
-      </div>
     </div>
   );
 };

@@ -33,6 +33,7 @@
     "@tanstack/query-sync-storage-persister": "5.0.5",
     "@tanstack/react-query": "^5.62.0",
     "@tanstack/react-query-persist-client": "5.0.5",
+    "@tanstack/react-table": "^8.20.5",
     "@zoralabs/protocol-sdk": "^0.9.6",
     "axios": "^1.7.2",
     "class-variance-authority": "^0.7.0",

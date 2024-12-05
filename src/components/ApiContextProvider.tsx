@@ -12,7 +12,7 @@ interface IApiType {
   fetchRequest: (params: IApiContextRequestType) => Promise<any>;
 }
 
-const ACTION = { REQ: "REQ", RES: "RES" };
+const ACTION = { REQ: "REQ", RES: "RES", ERR: "ERR" };
 
 const dataReducer = (state: any, action: any) => {
   switch (action?.type) {
@@ -25,6 +25,14 @@ const dataReducer = (state: any, action: any) => {
         [`is${action.model}`]: false,
         [`res${action.model}`]: action?.data || null,
       };
+
+    case ACTION.ERR:
+        return {
+          ...state,
+          [`is${action.model}`]: false,
+          [`res${action.model}`]: null,
+          [`err${action.model}`]: action?.data,
+        };
     default:
       return state;
   }
@@ -65,7 +73,7 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
       // Handle other non-success responses
       if (response?.status !== 200 || !response?.ok) {
         const json = await response.json();
-        dispatch({ model: modelKey, data: response, type: ACTION.RES });
+        dispatch({ model: modelKey, data: response, type: ACTION.ERR });
         return json;
       }
 
@@ -75,7 +83,7 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
 
       return json;
     } catch (error) {
-      dispatch({ model: modelKey, data: null, type: ACTION.RES });
+      dispatch({ model: modelKey, data: error, type: ACTION.ERR });
       throw error;
     }
   };

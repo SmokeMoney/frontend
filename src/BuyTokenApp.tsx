@@ -64,6 +64,7 @@ function BuyTokenApp() {
     // resWalletData,
     // errWalletData,
   } = useApi();
+    console.log("🚀 ~ BuyTokenApp ~ errWalletData:", errWalletData)
   const { wallets } = useWallets();
 
   const [chains, setChains] = useState<ChainTypes[]>([]);

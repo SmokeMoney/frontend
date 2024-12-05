@@ -11,12 +11,48 @@ import BuyTokenModal from "./components/BuyTokenModal";
 import ConnectWallet from "./components/ConnectWallet";
 import logo from "../public/logo4.png";
 
-function BuyTokenApp() {
-  const { fetchRequest, isBorrowToken } = useApi();
-  const { wallets } = useWallets();
-  const { sendTransaction } = useSendTransaction();
+export interface ChainTypes {
+  key: string
+  chainType: string
+  name: string
+  coin: string
+  id: number
+  mainnet: boolean
+  logoURI: string
+  tokenlistUrl: string
+  multicallAddress: string
+  metamask: {
+    chainId: string
+    blockExplorerUrls: string[]
+    chainName: string
+    nativeCurrency: {
+      name: string
+      symbol: string
+      decimals: number
+    },
+    rpcUrls: string[]
+  },
+  nativeToken: {
+    address: string
+    chainId: number
+    symbol: string
+    decimals: number
+    name: string
+    coinKey: string
+    logoURI: string
+    priceUSD: string
+  },
+  diamondAddress: string
+  permit2: string
+  permit2Proxy: string
+}
 
-  const [chains, setChains] = useState<any>([]);
+
+function BuyTokenApp() {
+  const { fetchRequest, isWalletData, resWalletData, errWalletDate } = useApi();
+  const { wallets } = useWallets();
+
+  const [chains, setChains] = useState<ChainTypes[]>([]);
   const [tokens, setTokens] = useState<any>([]);
   const [selectedChain, setSelectedChain] = useState<any>();
   const [selectedToken, setSelectedToken] = useState<any>(null);
@@ -27,10 +63,8 @@ function BuyTokenApp() {
    * when connected wallet get all chain
    */
   useEffect(() => {
-    if (wallets?.length > 0) {
-      _getChains();
-    }
-  }, [wallets]);
+    _getChains();
+  }, []);
 
   /**
    * when changed chain get tokens
@@ -47,12 +81,12 @@ function BuyTokenApp() {
    */
   async function _getChains() {
     try {
-      const _res: any[] = await getChains({ chainTypes: [ChainType.EVM] });
+      const _res: ChainTypes[] | null = await getChains({ chainTypes: [ChainType.EVM] });
       if (_res && _res?.length > 0) {
         setChains(_res);
         setSelectedChain(_res[0]);
       }
-    } catch (error) {}
+    } catch (error) { }
   }
 
   /**
@@ -84,19 +118,18 @@ function BuyTokenApp() {
    * Catches and logs any errors that occur during execution.
    */
   async function handleBuyToken(token: TokenType) {
-    console.log(token);
     if (!token || !token.amount || !token.address) {
       console.error("Invalid token data");
       return;
     }
 
     try {
-      const cleanAddress = address.replace(/^0x/, "").toLocaleLowerCase();
-      const paddedAddress = "0x" + cleanAddress.padStart(64, "0");
+      const cleanAddress = address.replace(/^0x/, '');
+      const paddedAddress = '0x' + cleanAddress.padStart(64, '0');
 
       const walletData = await fetchRequest({
         url: `https://mainnet.smoke.money/api/walletdata/${paddedAddress}`,
-        model: "BorrowToken",
+        model: "WalletData",
       });
 
       if (!walletData || walletData.length === 0) {
@@ -116,7 +149,7 @@ function BuyTokenApp() {
 
       const quoteRes = await fetchRequest({
         url: `https://li.quest/v1/quote?${queryString}`,
-        model: "BorrowToken",
+        model: "Qoute",
       });
 
       if (!quoteRes?.transactionRequest) {
@@ -142,12 +175,14 @@ function BuyTokenApp() {
         throw new Error("Borrow not approved");
       }
 
-      const provider = new BrowserProvider(window.ethereum); // Use BrowserProvider instead
+      const provider = new BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
 
       const txResponse = await signer.sendTransaction(
         quoteRes?.transactionRequest
       );
+
+      console.log("🚀 ~ handleBuyToken ~ txResponse:", txResponse)
 
       return txResponse;
     } catch (error) {
@@ -169,9 +204,9 @@ function BuyTokenApp() {
 
   return (
     <div className="select-none">
-      <div className="absolute w-full bg-[#2D3542] shadow-xl">
+      <div className="absolute w-full bg-[#171821] shadow-xl">
         <header>
-          <div className="container mx-auto flex flex-row items-center justify-between p-2">
+          <div className="mx-auto flex flex-row items-center justify-between p-2">
             <div className="flex flex-row items-center animate-pulse">
               <img src={logo} className="w-24" />
             </div>
@@ -187,19 +222,39 @@ function BuyTokenApp() {
         </header>
       </div>
 
-      <div className="bg-[#1B202A] pt-20 min-h-screen">
-        <div className="container w-full">
+      <div className="bg-[#0F1018] pt-20 min-h-screen">
+        <div className="w-full px-10 md:px-10">
           <BuyTokenModal
             isOpen={!!selectedToken}
             onClose={() => setSelectedToken(null)}
             token={selectedToken}
             onSwapToken={handleBuyToken}
-            loading={isBorrowToken || false}
+            loading={[{
+              loading: isWalletData,
+              success: resWalletData,
+              error: errWalletDate, //isWalletData, resWalletData, errWalletDate
+            }, {
+              loading: false,
+              success: false,
+              error: "Hello",
+            },
+            {
+              loading: false,
+              success: false,
+              error: "Hello",
+            }, {
+              loading: false,
+              success: false,
+              error: "Hello",
+            }]}
             chain={selectedChain}
           />
 
           <TokenTable
             tokens={tokens}
+            chains={chains || []}
+            selectedChain={selectedChain}
+            setSelectedChain={handleChangeChain}
             handleBuyToken={(token: TokenType) => setSelectedToken(token)}
           />
         </div>

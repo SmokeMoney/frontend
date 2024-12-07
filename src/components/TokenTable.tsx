@@ -32,6 +32,7 @@ interface TokenTableProps {
   setSelectedChain: (value: ChainTypes) => void;
   selectedChain: ChainTypes;
   handleBuyToken: (token: TokenType) => void;
+  allowedChains?: number[];
 }
 
 const columnsDic = {
@@ -62,11 +63,11 @@ const defaultColumns: any = [
   }),
 ]
 
-const TokenTable = ({ tokens, handleBuyToken, chains, setSelectedChain, selectedChain }: TokenTableProps) => {
+const TokenTable = ({ tokens, handleBuyToken, chains, setSelectedChain, selectedChain, allowedChains }: TokenTableProps) => {
   const quickBuyInputRef: any = useRef(null);
 
   const [isQuickBuy, setIsQuickBuy] = useState(true);
-  const [buyAmount, setBuyAmount] = useState<string>('');
+  const [buyAmount, setBuyAmount] = useState<string>('0.000042');
   const [columnVisibility, setColumnVisibility] = useState({});
   const [columns] = useState<typeof defaultColumns>(() => defaultColumns);
 
@@ -194,9 +195,11 @@ const TokenTable = ({ tokens, handleBuyToken, chains, setSelectedChain, selected
                 <div className="border-b p-3 font-bold sticky top-0 bg-[#171821] z-50">Switch Network</div>
 
                 <div className="flex flex-col gap-2 p-4">
-                  {chains?.map?.((x: any) => (
-                    <DropdownMenu.Item className="outline-none">
-                      <div onClick={() => setSelectedChain(x)} className="flex flex-row items-center gap-2 cursor-pointer relative" key={x?.key}>
+                  {chains
+                    ?.filter(chain => !allowedChains || allowedChains.includes(chain.id))
+                    ?.map?.((x: ChainTypes) => (
+                    <DropdownMenu.Item className="outline-none" key={x.id}>
+                      <div onClick={() => setSelectedChain(x)} className="flex flex-row items-center gap-2 cursor-pointer relative">
                         <img src={x?.logoURI} className="w-8 h-8 rounded-md" />
                         <span>{x?.name}</span>
                       </div>

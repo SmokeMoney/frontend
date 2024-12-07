@@ -11,6 +11,7 @@ import BuyTokenModal from "./components/BuyTokenModal";
 import ConnectWallet from "./components/ConnectWallet";
 import logo from "../public/logo4.png";
 import { set } from "idb-keyval";
+import { addressToBytes32 } from "./utils/addressConversion";
 
 export interface ChainTypes {
   key: string;
@@ -103,7 +104,8 @@ function BuyTokenApp() {
       });
       if (_res && _res?.length > 0) {
         setChains(_res);
-        setSelectedChain(_res[0]);
+        const optimismChain = _res.find(chain => chain.id === 10);
+        setSelectedChain(optimismChain || _res[0]);
       }
     } catch (error) {}
   }
@@ -147,6 +149,7 @@ function BuyTokenApp() {
    */
   async function handleBuyToken(token: TokenType) {
     if (!token || !token.amount || !token.address) {
+      console.log("Invalid token data", token);
       console.error("Invalid token data");
       setIsError(true);
       return;
@@ -154,11 +157,11 @@ function BuyTokenApp() {
 
     try {
       setIsError(false);
-      const cleanAddress = address.replace(/^0x/, "");
-      const paddedAddress = "0x" + cleanAddress.padStart(64, "0");
+
+      const bytes32Address = addressToBytes32(address);
 
       const walletData = await fetchRequest({
-        url: `https://mainnet.smoke.money/api/walletdata/${paddedAddress}`,
+        url: `https://mainnet.smoke.money/api/walletdata/${bytes32Address}`,
         model: "WalletData",
       });
 
@@ -189,9 +192,9 @@ function BuyTokenApp() {
       }
 
       const borrowReqBody = {
-        recipient: paddedAddress,
+        recipient: bytes32Address,
         amount: parseEther(token.amount)?.toString(),
-        walletAddress: paddedAddress,
+        walletAddress: bytes32Address,
         nftId: walletData[0].id?.toString(),
         chainId: "30111",
       };
@@ -204,6 +207,7 @@ function BuyTokenApp() {
       });
 
       if (borrowRes?.status !== "borrow_approved") {
+        console.log("borrowRes", borrowRes);
         throw new Error("Borrow not approved");
       }
 
@@ -296,6 +300,7 @@ function BuyTokenApp() {
               setSelectedToken(token);
               handleBuyToken(token);
             }}
+            allowedChains={[10, 42161, 8453]}
           />
         </div>
       </div>

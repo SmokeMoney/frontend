@@ -8,7 +8,7 @@ import {
   useWaitForTransactionReceipt,
   useSwitchChain,
 } from "wagmi";
-import { parseEther, keccak256, toBytes, encodePacked } from "viem";
+import { parseEther, keccak256, toBytes, encodePacked, TypedDataDomain, hashTypedData } from "viem";
 
 import {
   getChainExplorer,
@@ -51,10 +51,12 @@ const HandleBorrow: React.FC<{
   setUpdateDataCounter,
   recipientAddress,
 }) => {
-  const [gaslessBorrow, setGaslessBorrow] = useState<boolean>(true);
+  const [gaslessBorrow, setGaslessBorrow] = useState<boolean>(false);
   const [recentBorrowAmount, setRecentBorrowAmount] = useState<string>("");
   const [customMessage, setCustomMessage] = useState<string>("");
   const [recentHash, setRecentHash] = useState<string>("");
+  const [recentSignature, setRecentSignature] = useState<string>("");
+  const [failedBorrow, setFailedBorrow] = useState<string>("");
 
   const [isConfirming, setIsConfirming] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
@@ -97,41 +99,62 @@ const HandleBorrow: React.FC<{
     }
     if (gaslessBorrow && borrowNonce !== undefined) {
       const timestamp = BigInt(Math.floor(Date.now() / 1000));
-
       const signatureValidity = BigInt(120); // 2 minutes
+
       try {
         if (!address || borrowNonce == undefined) return null;
-        const signature = await signTypedDataAsync({
-          domain: {
-            name: "SmokeSpendingContract",
-            version: "1",
-            chainId: chainId,
-            verifyingContract: getChainLendingAddress(getLZId(chainId)),
-          },
-          types: {
-            Borrow: [
-              { name: "borrower", type: "address" },
-              { name: "issuerNFT", type: "address" },
-              { name: "nftId", type: "uint256" },
-              { name: "amount", type: "uint256" },
-              { name: "timestamp", type: "uint256" },
-              { name: "signatureValidity", type: "uint256" },
-              { name: "nonce", type: "uint256" },
-              { name: "recipient", type: "address" },
-            ],
-          },
-          primaryType: "Borrow",
-          message: {
-            borrower: address,
-            issuerNFT: getNftAddress() as `0x${string}`,
-            nftId: BigInt(selectedNFT.id),
-            amount: parseEther(withdrawAmount),
-            timestamp,
-            signatureValidity,
-            nonce: borrowNonce,
-            recipient: recipientAddress ?? address,
-          },
+        
+        // Add digest calculation
+        const domain = {
+          name: "SmokeSpendingContract",
+          version: "1",
+          chainId: chainId,
+          verifyingContract: getChainLendingAddress(getLZId(chainId)),
+        } as const;
+
+        const types = {
+          Borrow: [
+            { name: "borrower", type: "address" },
+            { name: "issuerNFT", type: "address" },
+            { name: "nftId", type: "uint256" },
+            { name: "amount", type: "uint256" },
+            { name: "timestamp", type: "uint256" },
+            { name: "signatureValidity", type: "uint256" },
+            { name: "nonce", type: "uint256" },
+            { name: "recipient", type: "address" },
+          ],
+        } as const;
+
+        const message = {
+          borrower: address,
+          issuerNFT: getNftAddress() as `0x${string}`,
+          nftId: BigInt(selectedNFT.id),
+          amount: parseEther(withdrawAmount),
+          timestamp,
+          signatureValidity,
+          nonce: borrowNonce,
+          recipient: recipientAddress ?? address,
+        } as const;
+
+        // Calculate digest
+        const digest = hashTypedData({
+          domain,
+          types,
+          primaryType: 'Borrow',
+          message,
         });
+        console.log("Frontend calculated digest:", digest);
+
+        const signature = await signTypedDataAsync({
+          domain,
+          types,
+          primaryType: "Borrow",
+          message,
+        });
+        
+        console.log(domain);
+        console.log(types);
+        console.log(message);
         if (typeof signature === "string") {
           toast({
             title: "Processing gasless borrow...",
@@ -149,6 +172,7 @@ const HandleBorrow: React.FC<{
             signature,
             false,
             0,
+            failedBorrow
           );
 
           setUpdateDataCounter(updateDataCounter + 1);
@@ -159,6 +183,7 @@ const HandleBorrow: React.FC<{
               setRecentHash(result.hash);
               setRecentBorrowAmount(withdrawAmount);
               setCustomMessage("");
+              setFailedBorrow("");
               toast({
                 description: "Gasless borrow initiated successfully",
                 action: (
@@ -222,7 +247,8 @@ const HandleBorrow: React.FC<{
         selectedNFT.id,
         parseEther(withdrawAmount).toString(),
         getLZId(chainId).toString(),
-        addressToBytes32(recipientAddress ?? address)
+        addressToBytes32(recipientAddress ?? address),
+        failedBorrow
       );
 
       if (!signatureData) {
@@ -233,10 +259,13 @@ const HandleBorrow: React.FC<{
 
       const {
         timestamp,
-        nonce: signatureNonce,
+        nonce: signatureNonceMix,
         signature,
         status,
       } = signatureData;
+      const signatureNonce = signatureNonceMix.hex ? signatureNonceMix.hex : signatureNonceMix;
+      console.log(Number(signatureNonce));
+      setRecentSignature(signature);
 
       if (status === "borrow_approved") {
         writeContract({
@@ -257,6 +286,7 @@ const HandleBorrow: React.FC<{
           ],
         });
         setUpdateDataCounter(updateDataCounter + 1);
+        setFailedBorrow("");
       } else if (status === "not_enough_limit") {
         console.error("Borrow limit reached");
         setCustomMessage("You don't have enough limit to borrow");
@@ -279,9 +309,10 @@ const HandleBorrow: React.FC<{
     }
     if (error) {
       console.log(error.message);
+      setFailedBorrow(recentSignature);
       setCustomMessage(
         error.message.includes("ERC20: burn amount exceeds balance")
-          ? "Borrow unavailable right now"
+          ? error.message.includes("User rejected the request") ? "User rejected the request" : "Borrow unavailable right now"
           : "Unknown reason"
       );
     }

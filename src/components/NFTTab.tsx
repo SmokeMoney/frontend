@@ -157,7 +157,8 @@ const NFTTab: React.FC<{
         selectedNFT.id,
         parseEther(mintCost).toString(),
         getLZId(chainId).toString(),
-        addressToBytes32(address)
+        addressToBytes32(address),
+        ""
       );
       if (!signatureData) {
         console.error("Failed to get borrow signature");

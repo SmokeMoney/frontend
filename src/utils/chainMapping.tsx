@@ -2,6 +2,7 @@
 export interface Chain {
   id: number;
   legacyId: number;
+  mainnet: boolean;
   name: string;
   rpcUrl: string;
   lendingAddress: string;
@@ -16,6 +17,7 @@ export const chains: Chain[] = [
   {
     id: 40245,
     legacyId: 84532,
+    mainnet: false,
     name: "Base Sepolia",
     rpcUrl: import.meta.env.VITE_BASSEPOLIA_RPC_URL!,
     lendingAddress: import.meta.env.VITE_BAS_LENDING_ADDRESS!,
@@ -27,6 +29,7 @@ export const chains: Chain[] = [
   {
     id: 40231,
     legacyId: 421614,
+    mainnet: false,
     name: "Arbitrum Sepolia",
     rpcUrl: import.meta.env.VITE_ARBSEPOLIA_RPC_URL!,
     lendingAddress: import.meta.env.VITE_ARB_LENDING_ADDRESS!,
@@ -38,6 +41,7 @@ export const chains: Chain[] = [
   {
     id: 40232,
     legacyId: 11155420,
+    mainnet: false,
     name: "Optimism Sepolia",
     rpcUrl: import.meta.env.VITE_OPTSEPOLIA_RPC_URL!,
     lendingAddress: import.meta.env.VITE_OPT_LENDING_ADDRESS!,
@@ -49,6 +53,7 @@ export const chains: Chain[] = [
   {
     id: 40161,
     legacyId: 11155111,
+    mainnet: false,
     name: "Ethereum Sepolia",
     rpcUrl: import.meta.env.VITE_ETHSEPOLIA_RPC_URL!,
     lendingAddress: import.meta.env.VITE_ETH_LENDING_ADDRESS!,
@@ -60,6 +65,7 @@ export const chains: Chain[] = [
   {
     id: 40249,
     legacyId: 999999999,
+    mainnet: false,
     name: "Zora Sepolia",
     rpcUrl: import.meta.env.VITE_ZORASEPOLIA_RPC_URL!,
     lendingAddress: import.meta.env.VITE_ZORA_LENDING_ADDRESS!,
@@ -71,6 +77,7 @@ export const chains: Chain[] = [
   {
     id: 40243,
     legacyId: 168587773,
+    mainnet: false,
     name: "Blast Sepolia",
     rpcUrl: import.meta.env.VITE_BLASTSEPOLIA_RPC_URL!,
     lendingAddress: import.meta.env.VITE_BLAST_LENDING_ADDRESS!,
@@ -82,6 +89,7 @@ export const chains: Chain[] = [
   {
     id: 40170,
     legacyId: 534351,
+    mainnet: false,
     name: "Scroll Sepolia",
     rpcUrl: import.meta.env.VITE_SCROLLSEPOLIA_RPC_URL!,
     lendingAddress: import.meta.env.VITE_SCROLL_LENDING_ADDRESS!,
@@ -93,6 +101,7 @@ export const chains: Chain[] = [
   {
     id: 40287,
     legacyId: 59141,
+    mainnet: false,
     name: "Linea Sepolia",
     rpcUrl: import.meta.env.VITE_LINEASEPOLIA_RPC_URL!,
     lendingAddress: import.meta.env.VITE_LINEA_LENDING_ADDRESS!,
@@ -104,6 +113,7 @@ export const chains: Chain[] = [
   {
     id: 40305,
     legacyId: 300,
+    mainnet: false,
     name: "zkSync Sepolia",
     rpcUrl: import.meta.env.VITE_ZKSYNCSEPOLIA_RPC_URL!,
     lendingAddress: import.meta.env.VITE_ZKSYNC_LENDING_ADDRESS!,
@@ -115,6 +125,7 @@ export const chains: Chain[] = [
   {
     id: 40322,
     legacyId: 2810,
+    mainnet: false,
     name: "Morph Holesky",
     rpcUrl: import.meta.env.VITE_MORPHSEPOLIA_RPC_URL!,
     lendingAddress: import.meta.env.VITE_MORPH_LENDING_ADDRESS!,
@@ -134,11 +145,67 @@ export const chains: Chain[] = [
   //   wstethAddress: import.meta.env.VITE_BER_WSTETH_ADDRESS!,
   //   explorer: "https://bartio.beratrail.io/",
   // },
+
+  {
+    id: 30184,
+    mainnet: true,
+    legacyId: 8453,
+    name: "Base Mainnet",
+    rpcUrl: import.meta.env.BASEMAINNET_RPC_URL!,
+    lendingAddress: import.meta.env.VITE_BAS_LENDING_ADDRESS!,
+    depositAddress: import.meta.env.VITE_BAS_DEPOSIT_ADDRESS!,
+    wethAddress: import.meta.env.VITE_BAS_WETH_ADDRESS!,
+    wstethAddress: import.meta.env.VITE_BAS_WSTETH_ADDRESS!,
+    explorer: "https://basescan.org/",
+  },
+  {
+    id: 30110,
+    mainnet: true,
+    legacyId: 42161,
+    name: "Arbitrum Mainnet",
+    rpcUrl: import.meta.env.ARBMAINNET_RPC_URL!,
+    lendingAddress: import.meta.env.VITE_ARB_LENDING_ADDRESS!,
+    depositAddress: import.meta.env.VITE_ARB_DEPOSIT_ADDRESS!,
+    wethAddress: import.meta.env.VITE_ARB_WETH_ADDRESS!,
+    wstethAddress: import.meta.env.VITE_ARB_WSTETH_ADDRESS!,
+    explorer: "https://arbiscan.io/",
+  },
+  {
+    id: 30111,
+    mainnet: true,
+    legacyId: 10,
+    name: "Optimism Mainnet",
+    rpcUrl: import.meta.env.OPTMAINNET_RPC_URL!,
+    lendingAddress: import.meta.env.VITE_OPT_LENDING_ADDRESS!,
+    depositAddress: import.meta.env.VITE_OPT_DEPOSIT_ADDRESS!,
+    wethAddress: import.meta.env.VITE_OPT_WETH_ADDRESS!,
+    wstethAddress: import.meta.env.VITE_OPT_WSTETH_ADDRESS!,
+    explorer: "https://optimistic.etherscan.io/",
+  },
+  {
+    id: 30214,
+    mainnet: true,
+    legacyId: 534352,
+    name: "Scroll Mainnet",
+    rpcUrl: import.meta.env.SCROLLMAINNET_RPC_URL!,
+    lendingAddress: import.meta.env.VITE_SCROLL_LENDING_ADDRESS!,
+    depositAddress: import.meta.env.VITE_SCROLL_DEPOSIT_ADDRESS!,
+    wethAddress: import.meta.env.VITE_SCROLL_WETH_ADDRESS!,
+    wstethAddress: import.meta.env.VITE_SCROLL_WSTETH_ADDRESS!,
+    explorer: "https://scrollscan.com/",
+  },
 ];
 
 // ... (keep the existing functions)
 
-export const chainIds = chains.map((chain) => chain.id);
+const isMainnet = import.meta.env.VITE_NODE_ENV === 'mainnet'; // or any other condition
+
+// Filter chains based on the configuration
+const filteredChains = chains.filter(chain => 
+  isMainnet ? chain.mainnet : !chain.mainnet
+);
+
+export const chainIds = filteredChains.map((chain) => chain.id);
 
 export function getChainName(chainId: number): string | undefined {
   const chain = chains.find((c) => c.id === chainId);

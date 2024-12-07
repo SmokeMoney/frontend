@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import * as Popover from "@radix-ui/react-popover";
-import { baseSepolia } from "wagmi/chains";
+import { base, baseSepolia } from "wagmi/chains";
 import { NFT_CONTRACT_ADDRESS, backendUrl } from "../CrossChainLendingApp";
 import { WalletConfig, NFT } from "../types";
 import { getChainName, getLZId } from "../utils/chainMapping";
@@ -480,7 +480,7 @@ const ManageTab: React.FC<ManageTabProps> = ({
           w="full"
           px={40}
         >
-          {chainId === baseSepolia.id ? (
+          { chainId === (import.meta.env.VITE_NODE_ENV === "mainnet"? base.id : baseSepolia.id) ? (
             <>
               {wallets.length > 0 && (
                 <div>

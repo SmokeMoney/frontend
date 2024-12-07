@@ -82,7 +82,8 @@ const AddWalletComp: React.FC<AddWalletProps> = ({
     const defaultAutogasChains = ['40161', '40232', '40287', '40243'];
     // Initialize autogasConfig with false for each chain
     const initialConfig = chainList.reduce((acc, chain) => {
-      acc[chain] = !defaultAutogasChains.includes(chain);
+      // acc[chain] = !defaultAutogasChains.includes(chain);
+      acc[chain] = false;
       return acc;
     }, {} as Record<string, boolean>);
     setAutogasConfig(initialConfig);
@@ -187,11 +188,11 @@ const AddWalletComp: React.FC<AddWalletProps> = ({
         <VStack>
           <Card>
             <CardHeader>
-              <CardTitle>Autogas: Gas Abstraction</CardTitle>
+              <CardTitle>Approve Your Wallet To Spend</CardTitle>
               <CardDescription>
-                Never worry about gas again.
+                {/* Never worry about gas again.
                 <p>Autogas refills your wallet soon as it </p>
-                <p>goes below a certain threshold</p>
+                <p>goes below a certain threshold</p> */}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -217,7 +218,7 @@ const AddWalletComp: React.FC<AddWalletProps> = ({
                       min="0"
                     />
                   </div> */}
-                  <div>
+                  {/* <div>
                     <Label>Enable Autogas for Chains</Label>
                     <CardDescription>
                       (You can change this later)
@@ -249,7 +250,7 @@ const AddWalletComp: React.FC<AddWalletProps> = ({
                     ))}
                   </div>
                   <Separator />
-                  <Label>Current Threshold: 0.001 ETH</Label>
+                  <Label>Current Threshold: 0.001 ETH</Label> */}
                 </div>
                 <Button
                   type="submit"

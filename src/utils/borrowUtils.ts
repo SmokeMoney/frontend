@@ -6,7 +6,8 @@ export const getBorrowSignature = async (
   nftId: string,
   withdrawAmount: any,
   chainId: any,
-  recipientAddress: string
+  recipientAddress: string,
+  failedBorrow: string
 ) => {
   try {
     const response = await axios.post(`${backendUrl}/api/borrow`, {
@@ -15,6 +16,7 @@ export const getBorrowSignature = async (
       amount: withdrawAmount,
       chainId: chainId,
       recipient: recipientAddress,
+      failedBorrow: failedBorrow,
     });
     return {
       timestamp: response.data.timestamp,
@@ -38,7 +40,8 @@ export const requestGaslessBorrow = async (
   recipientAddress: string,
   userSignature: string,
   weth: boolean,
-  integrator: number
+  integrator: number,
+  failedBorrow: string
 ) => {
 
   try {
@@ -52,6 +55,7 @@ export const requestGaslessBorrow = async (
       userSignature: userSignature,
       weth: weth,
       integrator: integrator,
+      failedBorrow: failedBorrow,
     });
     return response.data;
   } catch (error) {

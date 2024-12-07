@@ -9,7 +9,7 @@ import {
   useReadContract,
 } from "wagmi";
 import { Address, parseEther } from "viem";
-import { arbitrumSepolia, baseSepolia } from "wagmi/chains";
+import { arbitrumSepolia, base, baseSepolia } from "wagmi/chains";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -50,7 +50,6 @@ import { backendUrl, NFT_CONTRACT_ADDRESS } from "@/CrossChainLendingApp";
 import axios from "axios";
 import { getChainExplorer, getLZId } from "@/utils/chainMapping";
 const coreNFTAbi = parseDumbAbis(coreNFTRawAbi);
-import loadingGif from "/smoke.gif";
 
 const MintNFTComp: React.FC<{
   ethBalance: string;
@@ -70,7 +69,7 @@ const MintNFTComp: React.FC<{
     });
 
   const switchToAdminChain = async () => {
-    switchChain({ chainId: baseSepolia.id });
+    switchChain({ chainId: base.id });
   };
 
   async function handleMint(e: any) {
@@ -81,7 +80,7 @@ const MintNFTComp: React.FC<{
       abi: coreNFTAbi,
       functionName: "mint",
       args: [0],
-      value: parseEther("0.02"),
+      value: parseEther("0.002"),
     });
   }
   const getTestnetETH = async () => {
@@ -169,13 +168,6 @@ const MintNFTComp: React.FC<{
     }
   }, [error]);
 
-  const LoadingAnimation = () => (
-    <img
-      src={loadingGif}
-      alt="Loading..."
-      style={{ width: "90px", height: "9  0px" }}
-    />
-  );
 
   return (
     <div>
@@ -191,11 +183,11 @@ const MintNFTComp: React.FC<{
               </CardHeader>
               <CardContent>
                 <div></div>
-                Mint Price: 0.02 ETH
+                Mint Price: 0.002 ETH
                 <div></div>
                 <HoverCard>
                   <HoverCardTrigger>
-                    Native Credit: 0.02 ETH (!)
+                    Native Credit: 0.002 ETH (!)
                   </HoverCardTrigger>
                   <HoverCardContent>
                     This is a built in native credit you get to spend on any
@@ -208,7 +200,7 @@ const MintNFTComp: React.FC<{
                   <Flex justify="space-between" wrap="wrap" gap={2}>
                     {!isConnected ? (
                       <ConnectButton />
-                    ) : baseSepolia.id === chainId ? (
+                    ) : base.id === chainId ? (
                       <Button
                         onClick={handleMint}
                         disabled={isPending || isConfirming}
@@ -283,7 +275,8 @@ const MintNFTComp: React.FC<{
                 </Flex>
               )}
             </Card>
-            <Card style={{ flex: 1, padding: 12 }}>
+            {import.meta.env.VITE_NODE_ENV === "testnet" ? (
+              <Card style={{ flex: 1, padding: 12 }}>
               <CardHeader>
                 <CardTitle>Base Testnet Faucet</CardTitle>
               </CardHeader>
@@ -334,7 +327,10 @@ const MintNFTComp: React.FC<{
                   </VStack>
                 </Flex>
               </CardFooter>
-            </Card>
+              </Card>
+            ) : (
+              ""
+            )}
           </VStack>
         </Flex>
       </Flex>

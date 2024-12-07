@@ -55,7 +55,7 @@ const WithdrawTab: React.FC<WithdrawTabProps> = ({
   totalWstEthDeposits,
   wstETHRatio,
 }) => {
-  const [withdrawAmount, setWithdrawAmount] = useState<string>("0.00042");
+  const [withdrawAmount, setWithdrawAmount] = useState<string>("0.000042");
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   const [selectedChain, setSelectedChain] = useState<string>(

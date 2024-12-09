@@ -3,20 +3,20 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 
 const ConnectWallet = () => {
-  const { connectWallet } = usePrivy();
+  const { connectOrCreateWallet } = usePrivy();
   const { ready, wallets } = useWallets();
 
   const address = wallets.length > 0 && wallets[0].address || '';
   const authenticated = (ready && wallets?.length > 0);
 
   async function handleLogin() {
-    try { await connectWallet() } catch (error) { }
+    try { await connectOrCreateWallet() } catch (error) { }
   };
 
   async function handleLogout() {
     try { wallets?.[0]?.disconnect() } catch (error) { }
   };
-
+  console.log(wallets);
   if (authenticated) {
     return (
       <div className='flex flex-row items-center gap-4'>

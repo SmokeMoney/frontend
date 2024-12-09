@@ -46,7 +46,7 @@ const persister = createSyncStoragePersister({
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <PrivyProvider
-      appId="cm43xbi1p02tovgpskmo86s36"
+      appId="cm4gw6o0e08u9kl71qkeuanxd"
       config={{
         loginMethods: ["email", "wallet"],
         appearance: {
@@ -55,8 +55,10 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
           logo: "https://your-logo-url",
         },
         embeddedWallets: {
-          createOnLogin: "users-without-wallets",
+          createOnLogin: "all-users",
+          showWalletUIs: false,
         },
+        defaultChain: config.chains[0],
       }}
     >
       <WagmiProvider config={config}>
@@ -65,11 +67,11 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
           persistOptions={{ persister }}
         >
           <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-            <RainbowKitProvider showRecentTransactions={true}>
+            {/* <RainbowKitProvider showRecentTransactions={true}> */}
               <ApiProvider>
                 <App />
               </ApiProvider>
-            </RainbowKitProvider>
+            {/* </RainbowKitProvider> */}
           </ThemeProvider>
           <ReactQueryDevtools initialIsOpen={false} />
         </PersistQueryClientProvider>

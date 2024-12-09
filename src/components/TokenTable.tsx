@@ -67,7 +67,7 @@ const TokenTable = ({ tokens, handleBuyToken, chains, setSelectedChain, selected
   const quickBuyInputRef: any = useRef(null);
 
   const [isQuickBuy, setIsQuickBuy] = useState(true);
-  const [buyAmount, setBuyAmount] = useState<string>('0.000042');
+  const [buyAmount, setBuyAmount] = useState<string>('0.0000042');
   const [columnVisibility, setColumnVisibility] = useState({});
   const [columns] = useState<typeof defaultColumns>(() => defaultColumns);
 

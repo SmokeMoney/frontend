@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useWallets } from "@privy-io/react-auth";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useSendTransaction } from "wagmi";
 import { ChainType, getChains, getTokens } from "@lifi/sdk";
 import { parseEther } from "viem";
-import { BrowserProvider } from "ethers";
+import { BrowserProvider, ethers } from "ethers";
+import { PrivyProvider } from "@privy-io/react-auth";
 
 import { useApi } from "./components/ApiContextProvider";
 import TokenTable, { TokenType } from "./components/TokenTable";
@@ -12,6 +13,8 @@ import ConnectWallet from "./components/ConnectWallet";
 import logo from "../public/logo4.png";
 import { set } from "idb-keyval";
 import { addressToBytes32 } from "./utils/addressConversion";
+import BorrowAndSwapERC20 from "./abi/BorrowAndSwapERC20.json";
+import { getChainLendingAddress, getLZId, getNftAddress } from "./utils/chainMapping";
 
 export interface ChainTypes {
   key: string;
@@ -68,6 +71,7 @@ function BuyTokenApp() {
   } = useApi();
     console.log("🚀 ~ BuyTokenApp ~ errWalletData:", errWalletData)
   const { wallets } = useWallets();
+  const { sendTransaction, signMessage, signTypedData } = usePrivy();
 
   const [chains, setChains] = useState<ChainTypes[]>([]);
   const [tokens, setTokens] = useState<any>([]);
@@ -211,12 +215,75 @@ function BuyTokenApp() {
         throw new Error("Borrow not approved");
       }
 
-      const provider = new BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
+      const provider = await wallets[0].getEthereumProvider();
+      const borrowSwapContract = "0x9cA9D67f613c50741E30e5Ef88418891e254604d"; // optimism
+      const issuerSignature = borrowRes?.signature;
+      
+      const userSignature = await signTypedData({
+        domain: {
+          name: "SmokeSpendingContract",
+          version: "1",
+          chainId: selectedChain.id,
+          verifyingContract: getChainLendingAddress(getLZId(selectedChain.id)),
+        },
+        types: {
+          Borrow: [
+            { name: "borrower", type: "address" },
+            { name: "issuerNFT", type: "address" },
+            { name: "nftId", type: "uint256" },
+            { name: "amount", type: "uint256" },
+            { name: "timestamp", type: "uint256" },
+            { name: "signatureValidity", type: "uint256" },
+            { name: "nonce", type: "uint256" },
+            { name: "recipient", type: "address" },
+          ],
+        },
+        primaryType: "Borrow",
+        message: {
+          borrower: address,
+          issuerNFT: getNftAddress() as `0x${string}`,
+          nftId: walletData[0].id?.toString(),
+          amount: parseEther(token.amount),
+          timestamp: borrowRes?.timestamp,
+          signatureValidity: 120,
+          nonce: borrowRes?.nonce,
+          recipient: borrowSwapContract,
+        },
+      });
 
-      const txResponse = await signer.sendTransaction(
-        quoteRes?.transactionRequest
-      );
+      // Create contract interface
+      const contractInterface = new ethers.Interface(BorrowAndSwapERC20);
+
+      // Encode function data
+      const unsignedTx = contractInterface.encodeFunctionData("borrowAndSwap", [
+        {
+          borrower: address,
+          issuerNFT: getNftAddress() as `0x${string}`,
+          nftId: walletData[0].id?.toString(),
+          amount: borrowRes?.amount,
+          timestamp: borrowRes?.timestamp,
+          signatureValidity: 120,
+          nonce: borrowRes?.nonce,
+          repayGas: 0,
+          weth: false,
+          recipient: borrowSwapContract,
+          integrator: 0
+        },
+        userSignature,
+        issuerSignature,
+        quoteRes?.transactionRequest.data
+      ]);
+
+      // Create the transaction request
+      const txRequest = {
+        to: borrowSwapContract,
+        data: unsignedTx,
+        value: "0", // or parseEther("0")
+        chainId: selectedChain.id
+      };
+
+      const txResponse = await sendTransaction(txRequest);
+      console.log("txResponse", txResponse);
 
       return txResponse;
     } catch (error) {

@@ -61,6 +61,8 @@ const BuyTokenModal = ({
       onClose();
       clearModel();
     }
+    onClose();
+    clearModel();
   };
 
   return (

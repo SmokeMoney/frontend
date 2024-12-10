@@ -16,7 +16,6 @@ const ConnectWallet = () => {
   async function handleLogout() {
     try { wallets?.[0]?.disconnect() } catch (error) { }
   };
-  console.log(wallets);
   if (authenticated) {
     return (
       <div className='flex flex-row items-center gap-4'>

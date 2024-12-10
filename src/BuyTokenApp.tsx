@@ -14,7 +14,13 @@ import logo from "../public/logo4.png";
 import { set } from "idb-keyval";
 import { addressToBytes32 } from "./utils/addressConversion";
 import BorrowAndSwapERC20 from "./abi/BorrowAndSwapERC20.json";
-import { getChainLendingAddress, getLZId, getNftAddress } from "./utils/chainMapping";
+import { getChainExplorer, getChainLendingAddress, getLZId, getNftAddress } from "./utils/chainMapping";
+import { backendUrl, NFT } from "./CrossChainLendingApp";
+import { toast } from "./components/ui/use-toast";
+import { Toaster } from "./components/ui/toaster";
+import { ToastAction } from "./components/ui/toast";
+import axios from "axios";
+import { getBalance } from "viem/actions";
 
 export interface ChainTypes {
   key: string;
@@ -69,15 +75,17 @@ function BuyTokenApp() {
     // errWalletData,
     clearModelValue,
   } = useApi();
-    console.log("🚀 ~ BuyTokenApp ~ errWalletData:", errWalletData)
+    // console.log("🚀 ~ BuyTokenApp ~ errWalletData:", errWalletData)
   const { wallets } = useWallets();
-  const { sendTransaction, signMessage, signTypedData } = usePrivy();
+  const { sendTransaction, signMessage, signTypedData, ready } = usePrivy();
 
   const [chains, setChains] = useState<ChainTypes[]>([]);
   const [tokens, setTokens] = useState<any>([]);
   const [selectedChain, setSelectedChain] = useState<any>();
   const [selectedToken, setSelectedToken] = useState<any>(null);
   const [isError, setIsError] = useState(false);
+  const [listNFTs, setListNFTs] = useState<NFT[]>([]);
+  const [selectedNFT, setSelectedNFT] = useState<NFT>();
 
   const address = (wallets?.length > 0 && wallets?.[0].address) || "";
 
@@ -96,6 +104,84 @@ function BuyTokenApp() {
       getTokensFilterByChainType(selectedChain?.id);
     }
   }, [selectedChain]);
+
+  const fetchWalletData = async (address: string) => {
+    try {
+      const response = await axios.get(
+        `${backendUrl}/api/walletdata/${address}`
+      );
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.data?.error === "Wallet not found") {
+          console.log("Wallet not found");
+          return [];
+        }
+      }
+      console.error("Error fetching wallet data:", error);
+      return [];
+    }
+  };
+
+  function areNFTsDifferent(nft1: NFT, nft2: NFT): boolean {
+    return JSON.stringify(nft1) !== JSON.stringify(nft2);
+  }
+
+  const mergeAndDeduplicateNFTs = (
+    existingNFTs: NFT[],
+    newNFTs: NFT[]
+  ): NFT[] => {
+    const combinedNFTs = [...existingNFTs, ...newNFTs];
+
+    const nftMap = new Map<string, NFT>();
+
+    combinedNFTs.forEach((nft) => {
+      if (!nftMap.has(nft.id) || nft.owner) {
+        nftMap.set(nft.id, nft);
+      }
+    });
+
+    return Array.from(nftMap.values());
+  };
+
+  useEffect(() => {
+    const fetchNFTsAndBalance = async () => {
+      if (ready && address) {
+        const fetchedNFTs: NFT[] = await fetchWalletData(
+          addressToBytes32(address)
+        );
+        setListNFTs((prevNFTs) =>
+          mergeAndDeduplicateNFTs(prevNFTs, fetchedNFTs)
+        );
+
+        if (
+          fetchedNFTs.length > 0 &&
+          (!selectedNFT || selectedNFT.id === "0")
+        ) {
+          console.log("Setting new selected NFT:", fetchedNFTs[0]);
+          setSelectedNFT(fetchedNFTs[0]);
+        }
+        if (
+          selectedNFT &&
+          fetchedNFTs.length > 0 &&
+          areNFTsDifferent(
+            selectedNFT,
+            fetchedNFTs.find((nft) => nft.id === selectedNFT.id) as NFT
+          )
+        ) {
+          console.log("Setting new selected NFT: ASFbsajidfb", fetchedNFTs);
+          setSelectedNFT(fetchedNFTs.find((nft) => nft.id === selectedNFT.id));
+        }
+      } else {
+        console.log("Conditions not met for setting NFT");
+      }
+      // if (address) {
+      //   const freshBalance = await getBalance(config, { address: address });
+      //   setEthBalance(Number(formatEther(freshBalance.value)).toPrecision(4));
+      // }
+    };
+    fetchNFTsAndBalance();
+  }, [ready, address, selectedNFT]);
 
   /**
    * Fetch all chains which type is EVM
@@ -163,17 +249,13 @@ function BuyTokenApp() {
       setIsError(false);
 
       const bytes32Address = addressToBytes32(address);
-
-      const walletData = await fetchRequest({
-        url: `https://mainnet.smoke.money/api/walletdata/${bytes32Address}`,
-        model: "WalletData",
-      });
-
-      if (!walletData || walletData.length === 0 || walletData.error) {
+      const walletData = selectedNFT;
+      if (!walletData ) {
         throw new Error("No wallet data found");
       }
 
       console.log("bi end bh esgui");
+      console.log("selectedNFT", selectedNFT);
 
       const qouteReqBody: any = {
         fromToken: "ETH",
@@ -195,16 +277,23 @@ function BuyTokenApp() {
         throw new Error("No transaction request found in quote");
       }
 
+      const borrowSwapContract = {
+        10: "0x9cA9D67f613c50741E30e5Ef88418891e254604d", // optimism
+        42161: "0x3a771f2D212979363715aB06F078F0Fb4d6e96Cb", // arbitrum
+        8453: "0x9b6f6F895a011c2C90857596A1AE2f537B097f52", // base
+      };
+
       const borrowReqBody = {
-        recipient: bytes32Address,
+        recipient: borrowSwapContract[selectedChain.id as keyof typeof borrowSwapContract],
         amount: parseEther(token.amount)?.toString(),
         walletAddress: bytes32Address,
-        nftId: walletData[0].id?.toString(),
-        chainId: "30111",
+        nftId: selectedNFT?.id?.toString(),
+        chainId: getLZId(selectedChain.id).toString(),
+        // failedBorrow: "0x3b662a7a24210788b8c13b0ce489a3fa658e44e0dcf8fd7d1c5bb1eab13e5b8b3f5fd650d675deef77e1864a9377efab0072e4297184767f9fa0866f22297e461b",
       };
 
       const borrowRes = await fetchRequest({
-        url: "https://mainnet.smoke.money/api/borrow",
+        url: `${backendUrl}/api/borrow`,
         body: borrowReqBody,
         method: "POST",
         model: "BorrowToken",
@@ -215,10 +304,12 @@ function BuyTokenApp() {
         throw new Error("Borrow not approved");
       }
 
-      const provider = await wallets[0].getEthereumProvider();
-      const borrowSwapContract = "0x9cA9D67f613c50741E30e5Ef88418891e254604d"; // optimism
+      console.log("borrowRes", borrowRes);
+
       const issuerSignature = borrowRes?.signature;
       
+      const nonce = BigInt(borrowRes?.nonce.hex).toString();
+
       const userSignature = await signTypedData({
         domain: {
           name: "SmokeSpendingContract",
@@ -242,14 +333,15 @@ function BuyTokenApp() {
         message: {
           borrower: address,
           issuerNFT: getNftAddress() as `0x${string}`,
-          nftId: walletData[0].id?.toString(),
-          amount: parseEther(token.amount),
+          nftId: selectedNFT?.id?.toString(),
+          amount: borrowRes?.amount,
           timestamp: borrowRes?.timestamp,
           signatureValidity: 120,
-          nonce: borrowRes?.nonce,
-          recipient: borrowSwapContract,
+          nonce: nonce,
+          recipient: borrowSwapContract[selectedChain.id as keyof typeof borrowSwapContract],
         },
       });
+      console.log("userSignature", userSignature);
 
       // Create contract interface
       const contractInterface = new ethers.Interface(BorrowAndSwapERC20);
@@ -259,31 +351,49 @@ function BuyTokenApp() {
         {
           borrower: address,
           issuerNFT: getNftAddress() as `0x${string}`,
-          nftId: walletData[0].id?.toString(),
+          nftId: selectedNFT?.id?.toString(),
           amount: borrowRes?.amount,
           timestamp: borrowRes?.timestamp,
           signatureValidity: 120,
-          nonce: borrowRes?.nonce,
+          nonce: nonce,
           repayGas: 0,
           weth: false,
-          recipient: borrowSwapContract,
+          recipient: borrowSwapContract[selectedChain.id as keyof typeof borrowSwapContract],
           integrator: 0
         },
         userSignature,
         issuerSignature,
         quoteRes?.transactionRequest.data
       ]);
-
       // Create the transaction request
       const txRequest = {
-        to: borrowSwapContract,
+        to: borrowSwapContract[selectedChain.id as keyof typeof borrowSwapContract],
         data: unsignedTx,
-        value: "0", // or parseEther("0")
+        value: 0, // or parseEther("0")
         chainId: selectedChain.id
       };
-
+      
       const txResponse = await sendTransaction(txRequest);
       console.log("txResponse", txResponse);
+
+      toast({
+        description: "Bought " + token.amount + " ETH worth of " + token.name,
+        action: (
+          <ToastAction altText="Try again">
+            {" "}
+            <a
+              href={
+                getChainExplorer(getLZId(selectedChain.id)) + "tx/" + txResponse?.transactionHash
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()} // Prevent toast from closing
+            >
+              View on Explorer
+            </a>
+          </ToastAction>
+        ),
+      });
 
       return txResponse;
     } catch (error) {
@@ -365,10 +475,12 @@ function BuyTokenApp() {
             setSelectedChain={handleChangeChain}
             handleBuyToken={(token: TokenType) => {
               setSelectedToken(token);
-              handleBuyToken(token);
+              handleBuyToken(token );
             }}
             allowedChains={[10, 42161, 8453]}
           />
+          
+      <Toaster />
         </div>
       </div>
     </div>

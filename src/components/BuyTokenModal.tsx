@@ -38,7 +38,7 @@ const BuyTokenModal = ({
       content: "",
     },
     {
-      title: "Borrowing Etherium",
+      title: "Borrowing Ethereum",
       content: "",
     },
   ];

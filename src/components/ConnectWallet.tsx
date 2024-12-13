@@ -3,7 +3,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 
 const ConnectWallet = () => {
-  const { connectOrCreateWallet } = usePrivy();
+  const { connectOrCreateWallet, logout } = usePrivy();
   const { ready, wallets } = useWallets();
 
   const address = wallets.length > 0 && wallets[0].address || '';
@@ -14,7 +14,15 @@ const ConnectWallet = () => {
   };
 
   async function handleLogout() {
-    try { wallets?.[0]?.disconnect() } catch (error) { }
+    try {
+      if (!ready) {
+        console.warn('Wallet not ready for logout');
+        return;
+      }
+      await logout();
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
   if (authenticated) {
     return (
@@ -34,7 +42,17 @@ const ConnectWallet = () => {
           </DropdownMenu.Trigger>
 
           <DropdownMenu.Portal>
-            <DropdownMenu.Content className="">
+            <DropdownMenu.Content className="bg-white">
+              <DropdownMenu.Item>
+                <div className="flex items-center gap-2 p-2 hover:bg-gray-100 cursor-pointer"
+                     onClick={() => navigator.clipboard.writeText(address)}>
+                  <address>{address}</address>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                </div>
+              </DropdownMenu.Item>
               <div className='bg-white hover:shadow-xl rounded-full p-1 flex flex-row items-center gap-2 pr-4 cursor-pointer' onClick={handleLogout}>
                 <span className='bg-red-100 border border-red-400 rounded-full p-1'>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

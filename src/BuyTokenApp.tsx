@@ -1,17 +1,15 @@
 import { useEffect, useState } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { useSendTransaction } from "wagmi";
 import { ChainType, getChains, getTokens } from "@lifi/sdk";
-import { parseEther } from "viem";
-import { BrowserProvider, ethers } from "ethers";
-import { PrivyProvider } from "@privy-io/react-auth";
+import { formatEther, parseEther } from "viem";
+import { ethers } from "ethers";
+import { createPublicClient, http } from 'viem'
 
 import { useApi } from "./components/ApiContextProvider";
 import TokenTable, { TokenType } from "./components/TokenTable";
 import BuyTokenModal from "./components/BuyTokenModal";
 import ConnectWallet from "./components/ConnectWallet";
 import logo from "../public/logo4.png";
-import { set } from "idb-keyval";
 import { addressToBytes32 } from "./utils/addressConversion";
 import BorrowAndSwapERC20 from "./abi/BorrowAndSwapERC20.json";
 import { getChainExplorer, getChainLendingAddress, getLZId, getNftAddress } from "./utils/chainMapping";
@@ -21,6 +19,8 @@ import { Toaster } from "./components/ui/toaster";
 import { ToastAction } from "./components/ui/toast";
 import axios from "axios";
 import { getBalance } from "viem/actions";
+import { config } from "./wagmi";
+import DataNonce from "./components/DataNonce";
 
 export interface ChainTypes {
   key: string;
@@ -77,7 +77,7 @@ function BuyTokenApp() {
   } = useApi();
     // console.log("🚀 ~ BuyTokenApp ~ errWalletData:", errWalletData)
   const { wallets } = useWallets();
-  const { sendTransaction, signMessage, signTypedData, ready } = usePrivy();
+  const { sendTransaction, signMessage, signTypedData, ready, authenticated } = usePrivy();
 
   const [chains, setChains] = useState<ChainTypes[]>([]);
   const [tokens, setTokens] = useState<any>([]);
@@ -88,7 +88,10 @@ function BuyTokenApp() {
   const [selectedNFT, setSelectedNFT] = useState<NFT>();
 
   const address = (wallets?.length > 0 && wallets?.[0].address) || "";
-
+  const [borrowNonce, setBorrowNonce] = useState<bigint | undefined>(undefined);
+  const [lendingAddress, setLendingAddress] = useState<
+    `0x${string}` | undefined
+  >(undefined);
   /**
    * when connected wallet get all chain
    */
@@ -104,6 +107,14 @@ function BuyTokenApp() {
       getTokensFilterByChainType(selectedChain?.id);
     }
   }, [selectedChain]);
+
+  useEffect(() => {
+    if (ready && !authenticated) {
+      console.log("Are we ready and not authenticated? ", ready && !authenticated);
+
+      wallets[0].loginOrLink();
+    }
+  }, [ready, authenticated]);
 
   const fetchWalletData = async (address: string) => {
     try {
@@ -146,7 +157,7 @@ function BuyTokenApp() {
 
   useEffect(() => {
     const fetchNFTsAndBalance = async () => {
-      if (ready && address) {
+      if (ready && authenticated && address) {
         const fetchedNFTs: NFT[] = await fetchWalletData(
           addressToBytes32(address)
         );
@@ -175,13 +186,20 @@ function BuyTokenApp() {
       } else {
         console.log("Conditions not met for setting NFT");
       }
-      // if (address) {
-      //   const freshBalance = await getBalance(config, { address: address });
-      //   setEthBalance(Number(formatEther(freshBalance.value)).toPrecision(4));
-      // }
+      if (address) {
+        const client = createPublicClient({ 
+          transport: http(),
+          chain: config.chains[0]  // or whichever chain you want
+        });
+        const freshBalance = await getBalance(client, { address: `0x${address.slice(2)}` });
+        if (freshBalance < parseEther("0.0001")) {
+          console.log("freshBalance", freshBalance);
+
+        }
+      }
     };
     fetchNFTsAndBalance();
-  }, [ready, address, selectedNFT]);
+  }, [ready, address, selectedNFT, selectedChain]);
 
   /**
    * Fetch all chains which type is EVM
@@ -290,6 +308,7 @@ function BuyTokenApp() {
         nftId: selectedNFT?.id?.toString(),
         chainId: getLZId(selectedChain.id).toString(),
         // failedBorrow: "0x3b662a7a24210788b8c13b0ce489a3fa658e44e0dcf8fd7d1c5bb1eab13e5b8b3f5fd650d675deef77e1864a9377efab0072e4297184767f9fa0866f22297e461b",
+        freshNonce: true,
       };
 
       const borrowRes = await fetchRequest({
@@ -308,8 +327,8 @@ function BuyTokenApp() {
 
       const issuerSignature = borrowRes?.signature;
       
-      const nonce = BigInt(borrowRes?.nonce.hex).toString();
-
+      const nonce = BigInt(borrowRes?.nonce.hex ?? borrowRes?.nonce).toString();
+      console.log("Are we ready? ", authenticated);
       const userSignature = await signTypedData({
         domain: {
           name: "SmokeSpendingContract",
@@ -480,6 +499,12 @@ function BuyTokenApp() {
             allowedChains={[10, 42161, 8453]}
           />
           
+        <DataNonce
+          selectedNFT={selectedNFT}
+          lendingAddress={lendingAddress}
+          setLendingAddress={setLendingAddress}
+          setBorrowNonce={setBorrowNonce}
+        />
       <Toaster />
         </div>
       </div>

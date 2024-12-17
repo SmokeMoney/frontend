@@ -38,7 +38,8 @@ export const requestGaslessBorrow = async (
   recipientAddress: string,
   userSignature: string,
   weth: boolean,
-  integrator: number
+  integrator: number,
+  freshNonce: boolean
 ) => {
 
   try {
@@ -52,6 +53,7 @@ export const requestGaslessBorrow = async (
       userSignature: userSignature,
       weth: weth,
       integrator: integrator,
+      freshNonce: freshNonce,
     });
     return response.data;
   } catch (error) {

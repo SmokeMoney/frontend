@@ -39,6 +39,7 @@ const DataNonce: React.FC<
   });
 
   useEffect(() => {
+    console.log("nonce", nonce);
     if (nonce !== null && nonce !== undefined) {
       setBorrowNonce(BigInt(nonce.toString()));
     } else {

@@ -16,7 +16,6 @@ export interface IModalsProps {
   chain: any;
 }
 
-const ETH_USD_PRICE = 3600;
 
 const BuyTokenModal = ({
   isOpen,

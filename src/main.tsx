@@ -52,7 +52,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
         appearance: {
           theme: "dark",
           accentColor: "#676FFF",
-          logo: "https://your-logo-url",
+          // logo: "https://your-logo-url",
         },
         embeddedWallets: {
           createOnLogin: "all-users",

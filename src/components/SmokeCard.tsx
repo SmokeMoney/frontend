@@ -4,13 +4,14 @@ import { Box, Flex, Text, useDisclosure, Popover, PopoverTrigger, PopoverContent
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "./ui/button";
 import { fetchOracleData } from "@/utils/oracleUtils";
+import { CreateSmokeAccountModal } from "./CreateSmokeAccountModal";
 
-const SmokeCard = ({ ready, selectedNFT, address }: { ready: boolean, selectedNFT: NFT, address: string }) => {
+const SmokeCard = ({ ready, selectedNFT, address, selectedChain, setUpdateDataCounter }: { ready: boolean, selectedNFT: NFT, address: string, selectedChain: any, setUpdateDataCounter: React.Dispatch<React.SetStateAction<number>> }) => {
     const [ethPrice, setEthPrice] = useState<string>("");
-    const [ethBalance, setEthBalance] = useState<string>("");
     const [ethOrUSD, setEthOrUSD] = useState<boolean>(false);
     const [wstETHRatio, setWstethRatio] = useState<string>("");
-
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    selectedChain
     useEffect(() => {
         const updatePrices = async () => {
           const oracleData: { eth: string; wsteth: string } =
@@ -24,6 +25,7 @@ const SmokeCard = ({ ready, selectedNFT, address }: { ready: boolean, selectedNF
           }
         };
         updatePrices();
+        setEthOrUSD(false);
     }, [ready, address, selectedNFT]);
       
     const totalWethDeposits = BigInt(
@@ -40,6 +42,13 @@ const SmokeCard = ({ ready, selectedNFT, address }: { ready: boolean, selectedNF
       ) ?? 0
     );
     
+    const totalLimit = BigInt(
+      Object.entries(selectedNFT?.chainLimits ?? {}).reduce(
+        (sum: number, [, amount]) => sum + parseFloat(amount),
+        0
+      )
+    );
+
     const calculations = useMemo(() => {
       const wstEthInEth =
           (totalWstEthDeposits * BigInt(wstETHRatio)) / parseEther("1");
@@ -55,6 +64,8 @@ const SmokeCard = ({ ready, selectedNFT, address }: { ready: boolean, selectedNF
           totalBorrowed;
       const availableToBorrowUsd =
           (parseEther(ethPrice) * availableToBorrowEth) / parseEther("1");
+
+      const alreadyApproved = totalLimit > 0;
 
       return {
           totalDepositsEth,
@@ -75,6 +86,7 @@ const SmokeCard = ({ ready, selectedNFT, address }: { ready: boolean, selectedNF
                 0
             ) ?? 0
           ),
+          alreadyApproved,
       };
     }, [
       ethPrice,
@@ -82,6 +94,7 @@ const SmokeCard = ({ ready, selectedNFT, address }: { ready: boolean, selectedNF
       totalWstEthDeposits,
       wstETHRatio,
       selectedNFT,
+      totalLimit,
     ]);
 
   const formatValue = (value: bigint, decimals: number = 5) =>
@@ -93,11 +106,13 @@ const SmokeCard = ({ ready, selectedNFT, address }: { ready: boolean, selectedNF
       : calculations.availableToBorrowEth
   );
 
+
   return (
     <Box p="6" bg="gray.800" maxW="sm" zIndex={5}>
       <Flex flexDirection="row" justifyContent="center" alignItems="center">
+
         {ready ? (
-          selectedNFT ? (
+          selectedNFT ? (calculations.alreadyApproved ? (
             <Popover placement="bottom-start">
               <PopoverTrigger>
                 <Flex
@@ -165,23 +180,47 @@ const SmokeCard = ({ ready, selectedNFT, address }: { ready: boolean, selectedNF
                 </PopoverBody>
               </PopoverContent>
             </Popover>
-          ) : (
+          ): 
+          <Box
+            fontSize="md"
+            fontWeight="600"
+            textAlign="center"
+            mr="5"
+            color="white"
+            as="button"
+            onClick={onOpen}
+            _hover={{ textDecoration: "underline" }}
+          >
+            💳 Need Another Action
+          </Box> ) : (
             <Box
               fontSize="md"
               fontWeight="600"
               textAlign="center"
               mr="5"
               color="white"
-              as="a"
-              href="https://app.smoke.money"
-              target="_blank"
+              as="button"
+              onClick={onOpen}
               _hover={{ textDecoration: "underline" }}
             >
-              💳 Get your card now
+              💳 Create Smoke Account
             </Box>
           )
         ) : null}
       </Flex>
+      <CreateSmokeAccountModal
+        isOpen={isOpen}
+        onClose={onClose}
+        afterAccountCreated={async () => {
+          // Force re-fetch of user's NFTs or balances
+          setUpdateDataCounter((prev) => prev + 1);
+          // Refresh the entire page
+          window.location.reload();
+        }}
+        selectedChain={selectedChain}
+        selectedNFT={selectedNFT!}
+        alreadyApproved={calculations.alreadyApproved}
+      />
     </Box>
   );
 };

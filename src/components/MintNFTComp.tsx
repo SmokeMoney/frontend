@@ -81,7 +81,7 @@ const MintNFTComp: React.FC<{
       abi: coreNFTAbi,
       functionName: "mint",
       args: [0],
-      value: parseEther("0.02"),
+      value: parseEther("0.002"),
     });
   }
   const getTestnetETH = async () => {

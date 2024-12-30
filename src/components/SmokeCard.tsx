@@ -112,7 +112,7 @@ const SmokeCard = ({ ready, selectedNFT, address, selectedChain, setUpdateDataCo
       <Flex flexDirection="row" justifyContent="center" alignItems="center">
 
         {ready ? (
-          selectedNFT ? (calculations.alreadyApproved ? (
+          selectedNFT ? (!calculations.alreadyApproved ? (
             <Popover placement="bottom-start">
               <PopoverTrigger>
                 <Flex

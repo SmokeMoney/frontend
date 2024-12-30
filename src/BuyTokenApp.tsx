@@ -78,7 +78,7 @@ function BuyTokenApp() {
   const [alreadyApproved, setAlreadyApproved] = useState<boolean>(false);
 
   const allowedChains = [10, 42161, 8453];
-  const address = (wallets?.length > 0 && wallets?.[0].connectorType === "embedded" && wallets?.[0].address) || "";
+  const address = wallets.length > 0 && wallets.find(wallet => wallet.connectorType === "embedded")?.address || '';
   const [lendingAddress, setLendingAddress] = useState<
     `0x${string}` | undefined
   >(undefined);
@@ -103,6 +103,7 @@ function BuyTokenApp() {
         wallets[0].loginOrLink();
       }
     }
+    console.log("walletrs", wallets);
   }, [ready, authenticated, wallets]);
 
   useEffect(() => {
@@ -122,8 +123,8 @@ function BuyTokenApp() {
   async function getAllTokens() {
     const { tokens }: any = await getTokens({ chains: allowedChains });
     setAllTokens(tokens);
-    const topTokens = await getTopTokens("base", "2024-12-26T12:43:20Z");
-    console.log("topTokens", topTokens);
+    // const topTokens = await getTopTokens("base", "2024-12-26T12:43:20Z");
+    // console.log("topTokens", topTokens);
   }
 
   const fetchWalletData = async (address: string) => {
@@ -173,7 +174,7 @@ function BuyTokenApp() {
           try {
             setLendingAddress(getChainLendingAddress(getLZId(selectedChain.id)))
             const nonce = await client.readContract({
-              address: lendingAddress as `0x${string}`,
+              address: getChainLendingAddress(getLZId(selectedChain.id)) as `0x${string}`,
               abi: spendingRawAbi,
               functionName: 'getCurrentNonce',
               args: [
@@ -224,6 +225,7 @@ function BuyTokenApp() {
                     title: "Refilling gas on " + selectedChain.name + "...",
                     description: "processing",
                   });
+                  console.log("address", address);
                   if (!address || !selectedNFT || !gasAmount) return null;
                   
                   const result = await requestGaslessBorrow(
@@ -313,6 +315,7 @@ function BuyTokenApp() {
           (!selectedNFT || selectedNFT.id === "0")
         ) {
           setSelectedNFT(fetchedNFTs[0]);
+          console.log("fetchedNFTs", fetchedNFTs);
         }
         if (
           selectedNFT &&
@@ -322,7 +325,6 @@ function BuyTokenApp() {
             fetchedNFTs.find((nft) => nft.id === selectedNFT.id) as NFT
           )
         ) {
-          console.log("selectedNFT HERHEHROIASNFOD", selectedNFT);
           setSelectedNFT(
             fetchedNFTs.find((nft) => nft.id === selectedNFT.id)
           );

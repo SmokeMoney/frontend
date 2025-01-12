@@ -521,9 +521,9 @@ export const CreateSmokeAccountModal: React.FC<CreateSmokeAccountModalProps> = (
         <PopoverArrow />
         <PopoverCloseButton />
         <PopoverHeader border="0">Create Smoke Account</PopoverHeader>
-        <Button onClick={transferAllBalance}>Transfer All Balance</Button>
+        {/* <Button onClick={transferAllBalance}>Transfer All Balance</Button>
         <Button onClick={async () => await transferNFT()}>Transfer NFT</Button>
-        <Button onClick={async () => await transferERC20()}>Transfer ERC20</Button>
+        <Button onClick={async () => await transferERC20()}>Transfer ERC20</Button> */}
         <PopoverBody>
           {/* Everything that was inside <ModalBody> goes here */}
           {/* e.g. your QR code, deposit instructions, check-balance button, etc. */}

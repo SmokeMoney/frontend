@@ -48,7 +48,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <PrivyProvider
       appId="cm4gw6o0e08u9kl71qkeuanxd"
       config={{
-        loginMethods: ["email", "wallet"],
+        loginMethods: ["email", "wallet", 'google', 'twitter', 'farcaster'],
         appearance: {
           theme: "dark",
           accentColor: "#676FFF",

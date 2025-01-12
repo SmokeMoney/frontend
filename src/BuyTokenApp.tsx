@@ -3,7 +3,7 @@ import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { ChainType, getChains, getTokens } from "@lifi/sdk";
 import { parseEther } from "viem";
 import { ethers } from "ethers";
-import { createPublicClient, http } from 'viem'
+import { createPublicClient, http } from "viem";
 
 import { useApi } from "./components/ApiContextProvider";
 import TokenTable, { TokenType } from "./components/TokenTable";
@@ -11,7 +11,12 @@ import ConnectWallet from "./components/ConnectWallet";
 import logo from "../public/logo4.png";
 import { addressToBytes32 } from "./utils/addressConversion";
 import BorrowAndSwapERC20 from "./abi/BorrowAndSwapERC20.json";
-import { getChainExplorer, getChainLendingAddress, getLZId, getNftAddress } from "./utils/chainMapping";
+import {
+  getChainExplorer,
+  getChainLendingAddress,
+  getLZId,
+  getNftAddress,
+} from "./utils/chainMapping";
 import { backendUrl, NFT } from "./CrossChainLendingApp";
 import { toast } from "./components/ui/use-toast";
 import { Toaster } from "./components/ui/toaster";
@@ -22,8 +27,9 @@ import { requestGaslessBorrow } from "./utils/borrowUtils";
 import spendingRawAbi from "./abi/SmokeSpendingContract.abi.json";
 import { Flex } from "@chakra-ui/react";
 import SmokeCard from "./components/SmokeCard";
-import getTopTokens from "./utils/dexRabbitUtils";
-
+import { Button } from "./components/ui/button";
+// import getTopTokens from "./utils/dexRabbitUtils";
+import "./BuyTokenApp.css";
 export interface ChainTypes {
   key: string;
   chainType: string;
@@ -61,10 +67,7 @@ export interface ChainTypes {
 }
 
 function BuyTokenApp() {
-  const {
-    fetchRequest
-  } = useApi();
-  
+  const { fetchRequest } = useApi();
   const { wallets } = useWallets();
   const { sendTransaction, signTypedData, ready, authenticated } = usePrivy();
 
@@ -77,11 +80,27 @@ function BuyTokenApp() {
   const [updateDataCounter, setUpdateDataCounter] = useState<number>(0);
   const [alreadyApproved, setAlreadyApproved] = useState<boolean>(false);
 
+  // Which screen (a.k.a. tab) are we on?
+  const [activeTab, setActiveTab] = useState<"buy" | "withdraw">("buy");
+
   const allowedChains = [10, 42161, 8453];
-  const address = wallets.length > 0 && wallets.find(wallet => wallet.connectorType === "embedded")?.address || '';
-  const [lendingAddress, setLendingAddress] = useState<
-    `0x${string}` | undefined
-  >(undefined);
+  const address =
+    (wallets.length > 0 &&
+      wallets.find((wallet) => wallet.connectorType === "embedded")?.address) ||
+    "";
+  const [lendingAddress, setLendingAddress] = useState<`0x${string}` | undefined>(
+    undefined
+  );
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     _getChains();
@@ -103,7 +122,7 @@ function BuyTokenApp() {
         wallets[0].loginOrLink();
       }
     }
-    console.log("walletrs", wallets);
+    console.log("wallets", wallets);
   }, [ready, authenticated, wallets]);
 
   useEffect(() => {
@@ -129,9 +148,7 @@ function BuyTokenApp() {
 
   const fetchWalletData = async (address: string) => {
     try {
-      const response = await axios.get(
-        `${backendUrl}/api/walletdata/${address}`
-      );
+      const response = await axios.get(`${backendUrl}/api/walletdata/${address}`);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -150,170 +167,11 @@ function BuyTokenApp() {
     return JSON.stringify(nft1) !== JSON.stringify(nft2);
   }
 
-  const fetchAndRefillBalance = async (selectedChain: any) => {
-    if (address && selectedNFT && alreadyApproved) {
-      const client = createPublicClient({ 
-        transport: http(selectedChain.metamask.rpcUrls[0]),
-        chain: {
-          id: selectedChain.id,
-          name: selectedChain.name,
-          network: selectedChain.name.toLowerCase(),
-          nativeCurrency: selectedChain.metamask.nativeCurrency,
-          rpcUrls: {
-            default: { http: selectedChain.metamask.rpcUrls },
-            public: { http: selectedChain.metamask.rpcUrls },
-          },
-        }
-      });
-      
-      try {
-        const freshBalance = await getBalance(client, { 
-          address: address as `0x${string}`
-        });
-        if (freshBalance < parseEther("0.00005")) {
-          try {
-            setLendingAddress(getChainLendingAddress(getLZId(selectedChain.id)))
-            const nonce = await client.readContract({
-              address: getChainLendingAddress(getLZId(selectedChain.id)) as `0x${string}`,
-              abi: spendingRawAbi,
-              functionName: 'getCurrentNonce',
-              args: [
-                lendingAddress,
-                selectedNFT?.id ? BigInt(selectedNFT.id) : BigInt(0)
-              ],
-            });
-            
-            if (nonce !== undefined) {
-              const timestamp = BigInt(Math.floor(Date.now() / 1000));
-              const gasAmount = parseEther("0.0001");
-              const signatureValidity = BigInt(120); // 2 minutes
-              try {
-                if (!address || nonce == undefined) return null;
-                const signature = await signTypedData({
-                  domain: {
-                    name: "SmokeSpendingContract",
-                    version: "1",
-                    chainId: selectedChain.id,
-                    verifyingContract: getChainLendingAddress(getLZId(selectedChain.id)),
-                  },
-                  types: {
-                    Borrow: [
-                      { name: "borrower", type: "address" },
-                      { name: "issuerNFT", type: "address" },
-                      { name: "nftId", type: "uint256" },
-                      { name: "amount", type: "uint256" },
-                      { name: "timestamp", type: "uint256" },
-                      { name: "signatureValidity", type: "uint256" },
-                      { name: "nonce", type: "uint256" },
-                      { name: "recipient", type: "address" },
-                    ],
-                  },
-                  primaryType: "Borrow",
-                  message: {
-                    borrower: address,
-                    issuerNFT: getNftAddress() as `0x${string}`,
-                    nftId: selectedNFT?.id?.toString(),
-                    amount: gasAmount.toString(),
-                    timestamp: timestamp.toString(),
-                    signatureValidity: signatureValidity.toString(),
-                    nonce: nonce.toString(),
-                    recipient: address,
-                  },
-                });
-                if (typeof signature === "string") {
-                  toast({
-                    title: "Refilling gas on " + selectedChain.name + "...",
-                    description: "processing",
-                  });
-                  console.log("address", address);
-                  if (!address || !selectedNFT || !gasAmount) return null;
-                  
-                  const result = await requestGaslessBorrow(
-                    address,
-                    selectedNFT.id.toString(),
-                    gasAmount.toString(),
-                    timestamp.toString(),
-                    getLZId(selectedChain.id).toString(),
-                    address,
-                    signature,
-                    false,
-                    0,
-                    true
-                  );
-          
-                  if (result) {
-                    if (result.status === "borrow_approved") {
-                      toast({
-                        description: "Gas refilled successfully",
-                        action: (
-                          <ToastAction altText="View on Explorer">
-                            <a
-                              href={
-                                getChainExplorer(getLZId(selectedChain.id)) + "tx/" + result.hash
-                              }
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              View on Explorer
-                            </a>
-                          </ToastAction>
-                        ),
-                      });
-                    } else {
-                      toast({
-                        description: result.status === "not_enough_limit" 
-                          ? "Borrow Failed: You don't have enough borrow limit"
-                          : result.status === "insufficient_issuer_balance"
-                          ? "Borrow unavailable right now"
-                          : result.status === "invalid_signature"
-                          ? "Your previous txn was still processing, try again. If it repeats, reach out via Discord."
-                          : "Unknown error, please reach out via Discord",
-                      });
-                    }
-                  } else {
-                    throw new Error(
-                      "Failed to get transaction hash from gasless borrow"
-                    );
-                  }
-                } else {
-                  throw new Error("Failed to sign message");
-                }
-              } catch (signError) {
-                if (signError instanceof Error) {
-                  if (signError.message.includes("User rejected the request")) {
-                    toast({ description: "Signature request was rejected" });
-                  } else {
-                    toast({
-                      description: "Failed to sign message: " + signError.message,
-                    });
-                  }
-                } else {
-                  toast({ description: "An unknown error occurred during signing" });
-                }
-                return;
-              }
-            }
-          } catch (error) {
-            console.error("Error fetching nonce:", error);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching balance:", error);
-      }
-    }
-  };
-
   useEffect(() => {
     const fetchNFTs = async () => {
       if (ready && authenticated && address) {
-        const fetchedNFTs: NFT[] = await fetchWalletData(
-          addressToBytes32(address)
-        );
-        if (
-          fetchedNFTs.length > 0 &&
-          (!selectedNFT || selectedNFT.id === "0")
-        ) {
+        const fetchedNFTs: NFT[] = await fetchWalletData(addressToBytes32(address));
+        if (fetchedNFTs.length > 0 && (!selectedNFT || selectedNFT.id === "0")) {
           setSelectedNFT(fetchedNFTs[0]);
           console.log("fetchedNFTs", fetchedNFTs);
         }
@@ -341,25 +199,188 @@ function BuyTokenApp() {
 
     runEffects();
   }, [ready, address, selectedNFT, selectedChain, lendingAddress, authenticated, updateDataCounter]);
- 
+
+  const fetchAndRefillBalance = async (selectedChain: any) => {
+    if (address && selectedNFT && alreadyApproved) {
+      const client = createPublicClient({
+        transport: http(selectedChain.metamask.rpcUrls[0]),
+        chain: {
+          id: selectedChain.id,
+          name: selectedChain.name,
+          network: selectedChain.name.toLowerCase(),
+          nativeCurrency: selectedChain.metamask.nativeCurrency,
+          rpcUrls: {
+            default: { http: selectedChain.metamask.rpcUrls },
+            public: { http: selectedChain.metamask.rpcUrls },
+          },
+        },
+      });
+
+      try {
+        const freshBalance = await getBalance(client, {
+          address: address as `0x${string}`,
+        });
+        if (freshBalance < parseEther("0.0001")) {
+          try {
+            setLendingAddress(getChainLendingAddress(getLZId(selectedChain.id)));
+            const nonce = await client.readContract({
+              address: getChainLendingAddress(
+                getLZId(selectedChain.id)
+              ) as `0x${string}`,
+              abi: spendingRawAbi,
+              functionName: "getCurrentNonce",
+              args: [
+                getNftAddress() as `0x${string}`,
+                selectedNFT?.id ? BigInt(selectedNFT.id) : BigInt(0),
+              ],
+            });
+
+            if (nonce !== undefined) {
+              const timestamp = BigInt(Math.floor(Date.now() / 1000));
+              const gasAmount = parseEther("0.0001");
+              const signatureValidity = BigInt(120); // 2 minutes
+              try {
+                if (!address || nonce === undefined || nonce === null) return null;
+                const domain = {
+                  name: "SmokeSpendingContract",
+                  version: "1",
+                  chainId: selectedChain.id,
+                  verifyingContract: getChainLendingAddress(
+                    getLZId(selectedChain.id)
+                  ),
+                };
+                const types = {
+                  Borrow: [
+                    { name: "borrower", type: "address" },
+                    { name: "issuerNFT", type: "address" },
+                    { name: "nftId", type: "uint256" },
+                    { name: "amount", type: "uint256" },
+                    { name: "timestamp", type: "uint256" },
+                    { name: "signatureValidity", type: "uint256" },
+                    { name: "nonce", type: "uint256" },
+                    { name: "recipient", type: "address" },
+                  ],
+                };
+                const message = {
+                  borrower: address,
+                  issuerNFT: getNftAddress() as `0x${string}`,
+                  nftId: selectedNFT?.id?.toString(),
+                  amount: gasAmount.toString(),
+                  timestamp: timestamp.toString(),
+                  signatureValidity: signatureValidity.toString(),
+                  nonce: nonce.toString(),
+                  recipient: address,
+                };
+                const signature = await signTypedData({
+                  domain,
+                  types,
+                  primaryType: "Borrow",
+                  message,
+                });
+
+                if (typeof signature === "string") {
+                  toast({
+                    title: "Refilling gas on " + selectedChain.name + "...",
+                    description: "processing",
+                  });
+                  if (!address || !selectedNFT || !gasAmount) return null;
+
+                  const result = await requestGaslessBorrow(
+                    address,
+                    selectedNFT.id.toString(),
+                    gasAmount.toString(),
+                    timestamp.toString(),
+                    getLZId(selectedChain.id).toString(),
+                    address,
+                    signature,
+                    false,
+                    0,
+                    true
+                  );
+
+                  if (result) {
+                    if (result.status === "borrow_approved") {
+                      toast({
+                        description: "Gas refilled successfully",
+                        action: (
+                          <ToastAction altText="View on Explorer">
+                            <a
+                              href={
+                                getChainExplorer(getLZId(selectedChain.id)) +
+                                "tx/" +
+                                result.hash
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              View on Explorer
+                            </a>
+                          </ToastAction>
+                        ),
+                      });
+                    } else {
+                      toast({
+                        description:
+                          result.status === "not_enough_limit"
+                            ? "Borrow Failed: You don't have enough borrow limit"
+                            : result.status === "insufficient_issuer_balance"
+                            ? "Borrow unavailable right now"
+                            : result.status === "invalid_signature"
+                            ? "Your previous txn was still processing, try again. If it repeats, reach out via Discord."
+                            : "Unknown error, please reach out via Discord",
+                      });
+                    }
+                  } else {
+                    throw new Error(
+                      "Failed to get transaction hash from gasless borrow"
+                    );
+                  }
+                } else {
+                  throw new Error("Failed to sign message");
+                }
+              } catch (signError) {
+                if (signError instanceof Error) {
+                  if (signError.message.includes("User rejected the request")) {
+                    toast({ description: "Signature request was rejected" });
+                  } else {
+                    toast({
+                      description: "Failed to sign message: " + signError.message,
+                    });
+                  }
+                } else {
+                  toast({
+                    description: "An unknown error occurred during signing",
+                  });
+                }
+                return;
+              }
+            }
+          } catch (error) {
+            console.error("Error fetching nonce:", error);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching balance:", error);
+      }
+    }
+  };
+
   async function _getChains() {
     try {
       const _res = await getChains({
         chainTypes: [ChainType.EVM],
       });
-      if (_res && _res?.length > 0) {
-        setChains(_res.filter(chain => chain.logoURI) as ChainTypes[]);
-        const baseChain = _res.find(chain => chain.id === 8453);
+      if (_res && _res.length > 0) {
+        setChains(_res.filter((chain) => chain.logoURI) as ChainTypes[]);
+        const baseChain = _res.find((chain) => chain.id === 8453);
         setSelectedChain(baseChain || _res[0]);
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error(error);
+    }
   }
 
-  /**
-   * Attempts to buy a token and shows toast notifications for success/failure.
-   * On success, displays a link to the explorer.
-   * On failure, allows "Try again" action which re-attempts the purchase.
-   */
   async function handleBuyToken(token: TokenType) {
     if (!token || !token.amount || !token.address) {
       console.error("Invalid token data");
@@ -369,71 +390,72 @@ function BuyTokenApp() {
       });
       return;
     }
-  
+
     try {
-  
       const bytes32Address = addressToBytes32(address);
       const walletData = selectedNFT;
       if (!walletData) {
         throw new Error("No wallet data found");
       }
-  
+
       const borrowSwapContract = {
         10: "0x9cA9D67f613c50741E30e5Ef88418891e254604d", // optimism
         42161: "0x3a771f2D212979363715aB06F078F0Fb4d6e96Cb", // arbitrum
         8453: "0x9b6f6F895a011c2C90857596A1AE2f537B097f52", // base
       };
-  
+
       // Step 1: Fetching Quote
       toast({
         description: `Fetching quote to buy...`,
       });
-  
+
       const qouteReqBody: any = {
         fromToken: "ETH",
         toChain: token.chainId,
         toToken: token?.address,
-        fromAddress: borrowSwapContract[token.chainId as keyof typeof borrowSwapContract],
+        fromAddress:
+          borrowSwapContract[token.chainId as keyof typeof borrowSwapContract],
         toAddress: address,
         fromChain: token.chainId,
         fromAmount: parseEther(token.amount)?.toString(),
       };
-  
+
       const queryString = new URLSearchParams(qouteReqBody).toString();
-  
+
       const quoteRes = await fetchRequest({
         url: `https://li.quest/v1/quote?${queryString}`,
         model: "Qoute",
       });
-  
+
       if (!quoteRes?.transactionRequest) {
         throw new Error("No transaction request found in quote");
       }
-  
+
       // Borrow request body
       const borrowReqBody = {
-        recipient: borrowSwapContract[token.chainId as keyof typeof borrowSwapContract],
+        recipient:
+          borrowSwapContract[token.chainId as keyof typeof borrowSwapContract],
         amount: parseEther(token.amount)?.toString(),
         walletAddress: bytes32Address,
         nftId: selectedNFT?.id?.toString(),
         chainId: getLZId(token.chainId).toString(),
         freshNonce: true,
       };
-  
+
       const borrowRes = await fetchRequest({
         url: `${backendUrl}/api/borrow`,
         body: borrowReqBody,
         method: "POST",
         model: "BorrowToken",
       });
-  
+
       if (borrowRes?.status !== "borrow_approved") {
         throw new Error("Borrow not approved");
       }
-  
+
       const issuerSignature = borrowRes?.signature;
       const nonce = BigInt(borrowRes?.nonce.hex ?? borrowRes?.nonce).toString();
-  
+
       const userSignature = await signTypedData({
         domain: {
           name: "SmokeSpendingContract",
@@ -462,10 +484,11 @@ function BuyTokenApp() {
           timestamp: borrowRes?.timestamp,
           signatureValidity: 120,
           nonce: nonce,
-          recipient: borrowSwapContract[token.chainId as keyof typeof borrowSwapContract],
+          recipient:
+            borrowSwapContract[token.chainId as keyof typeof borrowSwapContract],
         },
       });
-  
+
       const contractInterface = new ethers.Interface(BorrowAndSwapERC20);
       const unsignedTx = contractInterface.encodeFunctionData("borrowAndSwap", [
         {
@@ -478,26 +501,27 @@ function BuyTokenApp() {
           nonce: nonce,
           repayGas: 0,
           weth: false,
-          recipient: borrowSwapContract[token.chainId as keyof typeof borrowSwapContract],
-          integrator: 0
+          recipient:
+            borrowSwapContract[token.chainId as keyof typeof borrowSwapContract],
+          integrator: 0,
         },
         userSignature,
         issuerSignature,
-        quoteRes?.transactionRequest.data
+        quoteRes?.transactionRequest.data,
       ]);
-   
+
       const txRequest = {
         to: borrowSwapContract[token.chainId as keyof typeof borrowSwapContract],
         data: unsignedTx,
         value: 0,
-        chainId: token.chainId
+        chainId: token.chainId,
       };
-  
+
       // Step 2: Submitting Transaction
       toast({
         description: `Submitting transaction...`,
       });
-  
+
       const txResponse = await sendTransaction(txRequest);
       console.log("txResponse", txResponse);
       // Step 3: Transaction Successful
@@ -507,7 +531,9 @@ function BuyTokenApp() {
           <ToastAction altText="View on Explorer">
             <a
               href={
-                getChainExplorer(getLZId(token.chainId)) + "tx/" + txResponse?.transactionHash
+                getChainExplorer(getLZId(token.chainId)) +
+                "tx/" +
+                txResponse?.transactionHash
               }
               target="_blank"
               rel="noopener noreferrer"
@@ -518,23 +544,28 @@ function BuyTokenApp() {
           </ToastAction>
         ),
       });
-  
+
       return txResponse;
     } catch (error: any) {
-      if (error?.message.includes("Wallet has insufficient funds for this transaction")) {
-        const currentChain = chains.find(chain => chain.id === token.chainId);
-        toast({ description: "Gas low on "+ currentChain?.name + ". Refilling gas..." });
+      if (
+        error?.message.includes(
+          "Wallet has insufficient funds for this transaction"
+        )
+      ) {
+        const currentChain = chains.find((chain) => chain.id === token.chainId);
+        toast({
+          description: "Gas low on " + currentChain?.name + ". Refilling gas...",
+        });
         await fetchAndRefillBalance(currentChain);
         await handleBuyToken(token);
       } else {
         toast({
-            description: `Token purchase failed: ${error?.message || "Unknown error"}`,
-            variant: "destructive",
-            action: (
-            <ToastAction
-              altText="Try again"
-              onClick={() => handleBuyToken(token)}
-            >
+          description: `Token purchase failed: ${
+            error?.message || "Unknown error"
+          }`,
+          variant: "destructive",
+          action: (
+            <ToastAction altText="Try again" onClick={() => handleBuyToken(token)}>
               Try again
             </ToastAction>
           ),
@@ -543,7 +574,6 @@ function BuyTokenApp() {
       }
     }
   }
-  
 
   async function handleChangeChain(_chain: any) {
     setSelectedChain(_chain);
@@ -552,42 +582,80 @@ function BuyTokenApp() {
 
   return (
     <div className="select-none">
+      {/* Header */}
       <div className="absolute w-full bg-[#171821] shadow-xl">
         <header>
-          <div className="mx-auto flex flex-row items-center justify-between p-2">
-            <div className="flex flex-row items-center animate-pulse">
-              <img src={logo} className="w-24" />
-            </div>
+          <Flex
+            direction={isMobile ? "column" : "row"}
+            p={3}
+            gap={4}
+          >
+            {/* Logo and buttons container */}
+            <Flex
+              alignItems="center"
+              gap={4}
+              flex={1}
+            >
+              <img src={logo} className="w-20 sm:w-24" />
+              <Flex gap={2}>
+                <Button
+                  variant={activeTab === "buy" ? "outline" : "default"}
+                  onClick={() => setActiveTab("buy")}
+                  className="text-sm sm:text-base"
+                >
+                  Buy
+                </Button>
+                <Button
+                  variant={activeTab === "withdraw" ? "outline" : "default"}
+                  onClick={() => setActiveTab("withdraw")}
+                  className="text-sm sm:text-base"
+                >
+                  Withdraw
+                </Button>
+              </Flex>
+            </Flex>
 
-            <Flex flexDirection="row" justifyContent="center" alignItems="center">
+            {/* Wallet section */}
+            <Flex
+              direction={isMobile ? "row" : "row"}
+              justifyContent="flex-end"
+              alignItems="center"
+              gap={2}
+              flex={1}
+            >
               <SmokeCard
                 ready={ready}
-                selectedNFT={selectedNFT!} 
+                selectedNFT={selectedNFT!}
                 address={address}
                 selectedChain={selectedChain}
                 setUpdateDataCounter={setUpdateDataCounter}
               />
-              <ConnectWallet/>
+              <ConnectWallet />
             </Flex>
-          </div>
+          </Flex>
         </header>
       </div>
 
-      <div className="bg-[#0F1018] pt-20 min-h-screen">
-        <div className="w-full px-10 md:px-10">
-          {/* Removed BuyTokenModal */}
+      {/* Main Content Area */}
+      <div className="bg-[#0F1018] pt-32 sm:pt-20 min-h-screen">
+        <div className="w-full px-2 sm:px-10">
+          {activeTab === "buy" && (
+            <TokenTable
+              tokens={tokens}
+              chains={chains || []}
+              selectedChain={selectedChain}
+              setSelectedChain={handleChangeChain}
+              handleBuyToken={(token: TokenType) => handleBuyToken(token)}
+              allowedChains={allowedChains}
+              isMobile={isMobile}
+            />
+          )}
 
-          <TokenTable
-            tokens={tokens}
-            chains={chains || []}
-            selectedChain={selectedChain}
-            setSelectedChain={handleChangeChain}
-            handleBuyToken={(token: TokenType) => {
-              handleBuyToken(token);
-            }}
-            allowedChains={allowedChains}
-          />
-
+          {activeTab === "withdraw" && (
+            <div className="flex items-center justify-center h-[400px] text-xl text-gray-400">
+              Coming Soon
+            </div>
+          )}
           <Toaster />
         </div>
       </div>
